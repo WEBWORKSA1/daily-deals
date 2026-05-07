@@ -1,1 +1,25 @@
-aW1wb3J0IG15c3FsIGZyb20gJ215c3FsMi9wcm9taXNlJwoKY29uc3QgcG9vbCA9IG15c3FsLmNyZWF0ZVBvb2woewogIGhvc3Q6ICAgICBwcm9jZXNzLmVudi5EQl9IT1NUICAgICB8fCAnbG9jYWxob3N0JywKICBwb3J0OiAgICAgTnVtYmVyKHByb2Nlc3MuZW52LkRCX1BPUlQpIHx8IDMzMDYsCiAgZGF0YWJhc2U6IHByb2Nlc3MuZW52LkRCX05BTUUgICAgIHx8ICdkYWlseV9kZWFscycsCiAgdXNlcjogICAgIHByb2Nlc3MuZW52LkRCX1VTRVIgICAgIHx8ICdyb290JywKICBwYXNzd29yZDogcHJvY2Vzcy5lbnYuREJfUEFTU1dPUkQgfHwgJycsCiAgd2FpdEZvckNvbm5lY3Rpb25zOiB0cnVlLAogIGNvbm5lY3Rpb25MaW1pdDogMTAsCiAgcXVldWVMaW1pdDogMCwKICB0aW1lem9uZTogJ1onLAp9KQoKZXhwb3J0IGRlZmF1bHQgcG9vbAoKZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHF1ZXJ5PFQgPSBhbnk+KHNxbDogc3RyaW5nLCBwYXJhbXM/OiBhbnlbXSk6IFByb21pc2U8VFtdPiB7CiAgY29uc3QgW3Jvd3NdID0gYXdhaXQgcG9vbC5leGVjdXRlKHNxbCwgcGFyYW1zKQogIHJldHVybiByb3dzIGFzIFRbXQp9CgpleHBvcnQgYXN5bmMgZnVuY3Rpb24gcXVlcnlPbmU8VCA9IGFueT4oc3FsOiBzdHJpbmcsIHBhcmFtcz86IGFueVtdKTogUHJvbWlzZTxUIHwgbnVsbD4gewogIGNvbnN0IHJvd3MgPSBhd2FpdCBxdWVyeTxUPihzcWwsIHBhcmFtcykKICByZXR1cm4gcm93c1swXSA/PyBudWxsCn0K
+import mysql from 'mysql2/promise'
+
+const pool = mysql.createPool({
+  host:     process.env.DB_HOST     || 'localhost',
+  port:     Number(process.env.DB_PORT) || 3306,
+  database: process.env.DB_NAME     || 'daily_deals',
+  user:     process.env.DB_USER     || 'root',
+  password: process.env.DB_PASSWORD || '',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  timezone: 'Z',
+})
+
+export default pool
+
+export async function query<T = any>(sql: string, params?: any[]): Promise<T[]> {
+  const [rows] = await pool.execute(sql, params)
+  return rows as T[]
+}
+
+export async function queryOne<T = any>(sql: string, params?: any[]): Promise<T | null> {
+  const rows = await query<T>(sql, params)
+  return rows[0] ?? null
+}
