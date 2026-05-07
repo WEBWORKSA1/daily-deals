@@ -1,1 +1,62 @@
-ZXhwb3J0IHR5cGUgQ291bnRyeSA9ICdVUycgfCAnQ0EnIHwgJ0JPVEgnCmV4cG9ydCB0eXBlIERlYWxUeXBlID0gJ2ZsYXNoJyB8ICdkYWlseScgfCAnY2xlYXJhbmNlJyB8ICdjb3Vwb24nCmV4cG9ydCB0eXBlIEFmZmlsaWF0ZU5ldCA9ICdhbWF6b24nIHwgJ2NqJyB8ICdzaGFyZWFzYWxlJyB8ICdkaXJlY3QnCgpleHBvcnQgaW50ZXJmYWNlIFJldGFpbGVyIHsKICBpZDogbnVtYmVyCiAgbmFtZTogc3RyaW5nCiAgc2x1Zzogc3RyaW5nCiAgbG9nb191cmw6IHN0cmluZyB8IG51bGwKICB3ZWJzaXRlX3VybDogc3RyaW5nCiAgY291bnRyeTogQ291bnRyeQogIGNhdGVnb3J5OiBzdHJpbmcKICBhZmZpbGlhdGVfbmV0OiBBZmZpbGlhdGVOZXQKICBicmFuZF9jb2xvcjogc3RyaW5nCiAgaXNfYWN0aXZlOiBib29sZWFuCn0KCmV4cG9ydCBpbnRlcmZhY2UgRGVhbCB7CiAgaWQ6IG51bWJlcgogIHRpdGxlOiBzdHJpbmcKICBkZXNjcmlwdGlvbjogc3RyaW5nIHwgbnVsbAogIG9yaWdpbmFsX3ByaWNlOiBudW1iZXIgfCBudWxsCiAgZGVhbF9wcmljZTogbnVtYmVyCiAgZGlzY291bnRfcGVyY2VudDogbnVtYmVyIHwgbnVsbAogIHJldGFpbGVyX2lkOiBudW1iZXIKICByZXRhaWxlcl9uYW1lPzogc3RyaW5nCiAgcmV0YWlsZXJfc2x1Zzo/IHN0cmluZwogIHJldGFpbGVyX2JyYW5kX2NvbG9yPzogc3RyaW5nCiAgY2F0ZWdvcnk6IHN0cmluZwogIGltYWdlX3VybDogc3RyaW5nIHwgbnVsbAogIGFmZmlsaWF0ZV91cmw6IHN0cmluZwogIGNvdXBvbl9jb2RlOiBzdHJpbmcgfCBudWxsCiAgaXNfb25saW5lOiBib29sZWFuCiAgaXNfbmF0aW9uYWw6IGJvb2xlYW4KICBpc19mZWF0dXJlZDogYm9vbGVhbgogIGNvdW50cnk6IENvdW50cnkKICBkZWFsX3R5cGU6IERlYWxUeXBlCiAgbG9jYXRpb25fcmVnaW9uOiBzdHJpbmcgfCBudWxsCiAgZXhwaXJlc19hdDogc3RyaW5nIHwgbnVsbAogIGNsaWNrX2NvdW50OiBudW1iZXIKICBjcmVhdGVkX2F0OiBzdHJpbmcKfQoKZXhwb3J0IGludGVyZmFjZSBMb2NhdGlvbiB7CiAgaWQ6IG51bWJlcgogIHNsdWc6IHN0cmluZwogIGNpdHk6IHN0cmluZwogIHN0YXRlX3Byb3ZpbmNlOiBzdHJpbmcKICBzdGF0ZV9jb2RlOiBzdHJpbmcKICBjb3VudHJ5OiAnVVMnIHwgJ0NBJwogIGxhdGl0dWRlOiBudW1iZXIKICBsb25naXR1ZGU6IG51bWJlcgp9CgpleHBvcnQgaW50ZXJmYWNlIFVzZXJMb2NhdGlvbiB7CiAgY2l0eTogc3RyaW5nCiAgc3RhdGVQcm92aW5jZTogc3RyaW5nCiAgc3RhdGVDb2RlOiBzdHJpbmcKICBwb3N0YWxDb2RlOiBzdHJpbmcKICBjb3VudHJ5OiAnVVMnIHwgJ0NBJwogIGlzRGV0ZWN0ZWQ6IGJvb2xlYW4KfQo=
+export type Country = 'US' | 'CA' | 'BOTH'
+export type DealType = 'flash' | 'daily' | 'clearance' | 'coupon'
+export type AffiliateNet = 'amazon' | 'cj' | 'shareasale' | 'direct'
+
+export interface Retailer {
+  id: number
+  name: string
+  slug: string
+  logo_url: string | null
+  website_url: string
+  country: Country
+  category: string
+  affiliate_net: AffiliateNet
+  brand_color: string
+  is_active: boolean
+}
+
+export interface Deal {
+  id: number
+  title: string
+  description: string | null
+  original_price: number | null
+  deal_price: number
+  discount_percent: number | null
+  retailer_id: number
+  retailer_name?: string
+  retailer_slug?: string
+  retailer_brand_color?: string
+  category: string
+  image_url: string | null
+  affiliate_url: string
+  coupon_code: string | null
+  is_online: boolean
+  is_national: boolean
+  is_featured: boolean
+  country: Country
+  deal_type: DealType
+  location_region: string | null
+  expires_at: string | null
+  click_count: number
+  created_at: string
+}
+
+export interface Location {
+  id: number
+  slug: string
+  city: string
+  state_province: string
+  state_code: string
+  country: 'US' | 'CA'
+  latitude: number
+  longitude: number
+}
+
+export interface UserLocation {
+  city: string
+  stateProvince: string
+  stateCode: string
+  postalCode: string
+  country: 'US' | 'CA'
+  isDetected: boolean
+}
