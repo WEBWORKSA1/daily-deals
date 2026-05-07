@@ -1,1 +1,25 @@
-LyoqIEB0eXBlIHtpbXBvcnQoJ3RhaWx3aW5kY3NzJykuQ29uZmlnfSAqLwptb2R1bGUuZXhwb3J0cyA9IHsKICBjb250ZW50OiBbCiAgICAnLi9zcmMvcGFnZXMvKiovKi57anMsdHMsanN4LHRzeCxtZHh9JywKICAgICcuL3NyYy9jb21wb25lbnRzLyoqLyoue2pzLHRzLGpzeCx0c3gsbWR4fScsCiAgICAnLi9zcmMvYXBwLyoqLyoue2pzLHRzLGpzeCx0c3gsbWR4fScsCiAgXSwKICB0aGVtZTogewogICAgZXh0ZW5kOiB7CiAgICAgIGNvbG9yczogewogICAgICAgIGJyYW5kOiB7CiAgICAgICAgICBuYXZ5OiAnIzBBMTYyOCcsCiAgICAgICAgICBvcmFuZ2U6ICcjRkY1QzAwJywKICAgICAgICAgICdvcmFuZ2UtbGlnaHQnOiAnI0ZGN0EyRScsCiAgICAgICAgICAnbmF2eS1saWdodCc6ICcjMTEyMDQwJywKICAgICAgICB9CiAgICAgIH0sCiAgICAgIGZvbnRGYW1pbHk6IHsKICAgICAgICBoZWFkaW5nOiBbJ1N5bmUnLCAnc2Fucy1zZXJpZiddLAogICAgICAgIGJvZHk6IFsnSW50ZXInLCAnc2Fucy1zZXJpZiddLAogICAgICB9CiAgICB9LAogIH0sCiAgcGx1Z2luczogW10sCn0K
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          navy: '#0A1628',
+          orange: '#FF5C00',
+          'orange-light': '#FF7A2E',
+          'navy-light': '#112040',
+        }
+      },
+      fontFamily: {
+        heading: ['Syne', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
+      }
+    },
+  },
+  plugins: [],
+}
