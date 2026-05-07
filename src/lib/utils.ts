@@ -1,2 +1,51 @@
-aW1wb3J0IHsgRGVhbCwgQWZmaWxpYXRlTmV0IH0gZnJvbSAnQC90eXBlcycKCmNvbnN0IEFNQVPOT05fVVNfVEFHID0gcHJvY2Vzcy5lbnYuTkVYVF9QVUJMSUNfQU1BWk9OX1VTX1RBRyB8fCAnZGFpbHlkZWFscy11cy0yMCcKY29uc3QgQU1BWk9OX0NBX1RBRyA9IHByb2Nlc3MuZW52Lk5FWFRfUFVCTElDX0FNQVpPTl9DQV9UQUcgfHwgJ2RhaWx5ZGVhbHMtY2EtMjAnCgpleHBvcnQgZnVuY3Rpb24gYnVpbGRBZmZpbGlhdGVMaW5rKGRlYWw6IERlYWwsIGFmZmlsaWF0ZU5ldDogQWZmaWxpYXRlTmV0KTogc3RyaW5nIHsKICB0cnkgewogICAgY29uc3QgcGFyc2VkID0gbmV3IFVSTChkZWFsLmFmZmlsaWF0ZV91cmwpCiAgICBpZiAoYWZmaWxpYXRlTmV0ID09PSAnYW1hem9uJykgewogICAgICBwYXJzZWQuc2VhcmNoUGFyYW1zLnNldCgndGFnJywgZGVhbC5jb3VudHJ5ID09PSAnQ0EnID8gQU1BWk9OX0NBX1RBRyA6IEFNQVPOT05fVVNfVEFHKQogICAgICByZXR1cm4gcGFyc2VkLnRvU3RyaW5nKCkKICAgIH0KICAgIHJldHVybiBkZWFsLmFmZmlsaWF0ZV91cmwKICB9IGNhdGNoIHsgcmV0dXJuIGRlYWwuYWZmaWxpYXRlX3VybCB9Cn0KCmV4cG9ydCBmdW5jdGlvbiBmb3JtYXRQcmljZShwcmljZTogbnVtYmVyLCBjb3VudHJ5OiBzdHJpbmcpOiBzdHJpbmcgewogIHJldHVybiBuZXcgSW50bC5OdW1iZXJGb3JtYXQoJ2VuLUNBJywgewogICAgc3R5bGU6ICdjdXJyZW5jeScsCiAgICBjdXJyZW5jeTogY291bnRyeSA9PT0gJ0NBJyA/ICdDQUQnIDogJ1VTRCcsCiAgICBtaW5pbXVtRnJhY3Rpb25EaWdpdHM6IDAsCiAgICBtYXhpbXVtRnJhY3Rpb25EaWdpdHM6IDIsCiAgfSkuZm9ybWF0KHByaWNlKQp9CgpleHBvcnQgZnVuY3Rpb24gZ2V0VGltZVJlbWFpbmluZyhleHBpcmVzQXQ6IHN0cmluZyk6IHN0cmluZyB8IG51bGwgewogIGNvbnN0IGRpZmYgPSBuZXcgRGF0ZShleHBpcmVzQXQpLmdldFRpbWUoKSAtIERhdGUubm93KCkKICBpZiAoZGlmZiA8PSAwKSByZXR1cm4gbnVsbAogIGNvbnN0IGggPSBNYXRoLmZsb29yKGRpZmYgLyAzNjAwMDAwKQogIGNvbnN0IG0gPSBNYXRoLmZsb29yKChkaWZmICUgMzYwMDAwMCkgLyA2MDAwMCkKICBpZiAoaCA+IDI0KSByZXR1cm4gYCR7TWF0aC5mbG9vcihoCiAvIDI0KX1kICR7aCAlIDI0fWhgCiAgaWYgKGggPiAwKSByZXR1cm4gYCR7aH1oICR7bX1tYAogIHJldHVybiBgJHttfW1gCn0KCmV4cG9ydCBmdW5jdGlvbiBzbHVnVG9UaXRsZShzbHVnOiBzdHJpbmcpOiBzdHJpbmcgewogIHJldHVybiBzbHVnLnNwbGl0KCctJykubWFwKHcgPT4gdy5jaGFyQXQoMCkudG9VcHBlckNhc2UoKSArIHcuc2xpY2UoMSkpLmpvaW4oJyAnKQp9CgpleHBvcnQgY29uc3QgQ0FURUdPUklFUyA9IFsKICB7IHNsdWc6ICdlbGVjdHJvbmljcycsICAgICBsYWJlbDogJ0VsZWN0cm9uaWNzJywgICBpY29uOiAn8J+SuycgfSwKICB7IHNsdWc6ICdmYXNoaW9uJywgICAgICAgICBsYWJlbDogJ0Zhc2hpb24nLCAgICAgICBpY29uOiAn8J+RlycgfSwKICB7IHNsdWc6ICdob21lLWtpdGNoZW4nLCAgICBsYWJlbDogJ0hvbWUgJiBLaXRjaGVuJywgaWNvbjogJ/CfjqAnIH0sCiAgeyBzbHVnOiAnc3BvcnRzLW91dGRvb3JzJywgbGFiZWw6ICdTcG9ydHMnLCAgICAgICBpY29uOiAn4pq9JyB9LAogIHsgc2x1ZzogJ2dyb2NlcnknLCAgICAgICAgIGxhYmVsOiAnR3JvY2VyeScsICAgICAgaWNvbjogJ/CflamyJyB9LAogIHsgc2x1ZzogJ2JlYXV0eScsICAgICAgICAgIGxhYmVsOiAnQmVhdXR5JywgICAgICAgaWNvbjogJ/Cfkq8nIH0sCiAgeyBzbHVnOiAnZ2FtaW5nJywgICAgICAgICAgbGFiZWw6ICdHYW1pbmcnLCAgICAgICBpY29uOiAn8J+OricgfSwg
-CiAgeyBzbHVnOiAndG9vbHMnLCAgICAgICAgICAgbGFiZWw6ICdUb29scycsICAgICAgICBpY29uOiAn8J+UJycgfSwKICB7IHNsdWc6ICdhdXRvbW90aXZlJywgICAgICBsYWJlbDogJ0F1dG9tb3RpdmUnLCAgIGljb246ICfwn5qXJyB9LAogIHsgc2x1ZzogJ29mZmljZScsICAgICAgICAgIGxhYmVsOiAnT2ZmaWNlJywgICAgICAgaWNvbjogJ/CfjqXvuI8nIH0sCl0K
+import { Deal, AffiliateNet } from '@/types'
+
+const AMAZON_US_TAG = process.env.NEXT_PUBLIC_AMAZON_US_TAG || 'dailydeals-us-20'
+const AMAZON_CA_TAG = process.env.NEXT_PUBLIC_AMAZON_CA_TAG || 'dailydeals-ca-20'
+
+export function buildAffiliateLink(deal: Deal, affiliateNet: AffiliateNet): string {
+  try {
+    const parsed = new URL(deal.affiliate_url)
+    if (affiliateNet === 'amazon') {
+      parsed.searchParams.set('tag', deal.country === 'CA' ? AMAZON_CA_TAG : AMAZON_US_TAG)
+      return parsed.toString()
+    }
+    return deal.affiliate_url
+  } catch { return deal.affiliate_url }
+}
+
+export function formatPrice(price: number, country: string): string {
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: country === 'CA' ? 'CAD' : 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(price)
+}
+
+export function getTimeRemaining(expiresAt: string): string | null {
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return null
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  if (h > 24) return `${Math.floor(h / 24)}d ${h % 24}h`
+  if (h > 0) return `${h}h ${m}m`
+  return `${m}m`
+}
+
+export function slugToTitle(slug: string): string {
+  return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+export const CATEGORIES = [
+  { slug: 'electronics',     label: 'Electronics',    icon: '💻' },
+  { slug: 'fashion',         label: 'Fashion',         icon: '👗' },
+  { slug: 'home-kitchen',    label: 'Home & Kitchen',  icon: '🏠' },
+  { slug: 'sports-outdoors', label: 'Sports',          icon: '⚽' },
+  { slug: 'grocery',         label: 'Grocery',         icon: '🛒' },
+  { slug: 'beauty',          label: 'Beauty',          icon: '💄' },
+  { slug: 'gaming',          label: 'Gaming',          icon: '🎮' },
+  { slug: 'tools',           label: 'Tools',           icon: '🔧' },
+  { slug: 'automotive',      label: 'Automotive',      icon: '🚗' },
+  { slug: 'office',          label: 'Office',          icon: '🖥️' },
+]
