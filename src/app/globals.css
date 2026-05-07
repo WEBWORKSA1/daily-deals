@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  h1, h2, h3, h4 { font-family: var(--font-heading, 'Syne', sans-serif); }
+  body { font-family: var(--font-body, 'Inter', sans-serif); }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-orange hover:bg-brand-orange-light text-white font-semibold px-5 py-2.5 rounded-lg transition-colors duration-150 inline-flex items-center gap-2;
+  }
+  .btn-secondary {
+    @apply border border-gray-200 hover:border-brand-orange hover:text-brand-orange text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors duration-150;
+  }
+  .deal-card {
+    @apply bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg hover:border-brand-orange/30 transition-all duration-200;
+  }
+  .badge-discount { @apply bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full; }
+  .badge-flash    { @apply bg-brand-orange text-white text-xs font-bold px-2 py-0.5 rounded-full; }
+  .badge-clearance{ @apply bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full; }
+  .section-title  { @apply text-2xl font-heading font-bold text-brand-navy mb-1; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.timer-flash { animation: pulse-red 1.5s ease-in-out infinite; }
