@@ -1,0 +1,40 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_AMAZON_US_TAG: ${{ secrets.NEXT_PUBLIC_AMAZON_US_TAG }}
+          NEXT_PUBLIC_AMAZON_CA_TAG: ${{ secrets.NEXT_PUBLIC_AMAZON_CA_TAG }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: 22
+          script: |
+            cd ~/domains/daily.deals/public_html
+            git pull origin main
+            npm ci --production
+            npm run build
+            pm2 restart daily-deals || pm2 start npm --name "daily-deals" -- start
+            pm2 save
