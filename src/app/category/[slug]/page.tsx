@@ -13,20 +13,44 @@ interface Props { params: { slug: string } }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = CATEGORIES.find(c => c.slug === params.slug)
   if (!cat) return { title: 'Category Not Found' }
-  return { title: `${cat.label} Deals Today | Daily.Deals`, description: `Best ${cat.label} deals and discounts today.` }
+  return { title: `${cat.label} Deals | Daily.Deals` }
 }
 
 export default async function CategoryPage({ params }: Props) {
   const cat = CATEGORIES.find(c => c.slug === params.slug)
   if (!cat) notFound()
 
-  const { data: deals } = await supabase
+  // Map slug to exact category name in DB
+  const categoryMap: Record<string, string[]> = {
+    'electronics':     ['Electronics'],
+    'fashion':         ['Fashion'],
+    'home-kitchen':    ['Home & Kitchen'],
+    'sports-outdoors': ['Sports', 'Sports & Outdoors', 'Outdoor'],
+    'grocery':         ['Grocery'],
+    'beauty':          ['Beauty'],
+    'gaming':          ['Gaming'],
+    'tools':           ['Tools'],
+    'automotive':      ['Automotive'],
+    'office':          ['Office'],
+  }
+
+  const categories = categoryMap[params.slug] || [cat.label]
+
+  let q = supabase
     .from('deals')
     .select('*, retailers(name, slug, brand_color, affiliate_net)')
     .eq('is_active', true)
-    .ilike('category', `%${cat.label.split(' ')[0]}%`)
     .order('discount_percent', { ascending: false })
     .limit(40)
+
+  // Filter by any matching category name
+  if (categories.length === 1) {
+    q = q.eq('category', categories[0])
+  } else {
+    q = q.in('category', categories)
+  }
+
+  const { data: deals } = await q
 
   const dealList = (deals || []).map((d: any) => ({
     ...d,
@@ -49,7 +73,7 @@ export default async function CategoryPage({ params }: Props) {
               <div>
                 <span className="text-brand-red text-xs font-bold uppercase tracking-widest">Category</span>
                 <h1 className="font-heading text-4xl font-900 text-white uppercase">{cat.label} Deals</h1>
-                <p className="text-brand-gray text-sm mt-1">{dealList.length} deals available today</p>
+                <p className="text-brand-gray text-sm mt-1">{dealList.length} deals available</p>
               </div>
             </div>
           </div>
@@ -57,12 +81,12 @@ export default async function CategoryPage({ params }: Props) {
 
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {dealList.length > 0 ? (
-            <DealSection title={`${cat.icon} ${cat.label} Deals Today`} deals={dealList} />
+            <DealSection title={`${cat.icon} ${cat.label} Deals`} deals={dealList} />
           ) : (
             <div className="text-center py-20">
               <div className="text-5xl mb-4 opacity-30">{cat.icon}</div>
               <h2 className="font-heading text-2xl text-white uppercase mb-2">No {cat.label} Deals Right Now</h2>
-              <p className="text-brand-gray">Check back soon — we update deals every 24 hours.</p>
+              <p className="text-brand-gray">Check back soon — deals are updated every 24 hours.</p>
             </div>
           )}
         </div>
