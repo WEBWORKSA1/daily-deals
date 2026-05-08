@@ -1,9 +1,5 @@
 import type { Metadata } from 'next'
-import { Syne, Inter } from 'next/font/google'
 import './globals.css'
-
-const syne = Syne({ subsets: ['latin'], variable: '--font-heading', display: 'swap' })
-const inter = Inter({ subsets: ['latin'], variable: '--font-body', display: 'swap' })
 
 export const metadata: Metadata = {
   title: { default: 'Daily.Deals — Best Deals Today | US & Canada', template: '%s | Daily.Deals' },
@@ -15,8 +11,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${syne.variable} ${inter.variable}`}>
-      <body className="bg-white text-gray-900 font-body antialiased">{children}</body>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="bg-brand-dark text-white font-body antialiased">{children}</body>
     </html>
   )
 }
