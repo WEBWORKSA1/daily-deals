@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { query } from '@/lib/db'
 import { Deal, Retailer } from '@/types'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -14,26 +13,51 @@ export const metadata: Metadata = {
   description: "Find today's best deals from 1000+ top retailers. Personalized by your location — updated every 24 hours.",
 }
 
-export const revalidate = 3600
+// Force dynamic rendering — never pre-render at build time
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-async function getFeaturedDeals() {
-  return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND d.is_featured = 1 AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 8`)
+async function getFeaturedDeals(): Promise<Deal[]> {
+  try {
+    const { query } = await import('@/lib/db')
+    return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND d.is_featured = 1 AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 8`)
+  } catch { return [] }
 }
-async function getFlashDeals() {
-  return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND d.deal_type = 'flash' AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 8`)
+
+async function getFlashDeals(): Promise<Deal[]> {
+  try {
+    const { query } = await import('@/lib/db')
+    return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND d.deal_type = 'flash' AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 8`)
+  } catch { return [] }
 }
-async function getUSDeals() {
-  return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND (d.country = 'US' OR d.country = 'BOTH') AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 12`)
+
+async function getUSDeals(): Promise<Deal[]> {
+  try {
+    const { query } = await import('@/lib/db')
+    return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND (d.country = 'US' OR d.country = 'BOTH') AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 12`)
+  } catch { return [] }
 }
-async function getCADeals() {
-  return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND (d.country = 'CA' OR d.country = 'BOTH') AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 12`)
+
+async function getCADeals(): Promise<Deal[]> {
+  try {
+    const { query } = await import('@/lib/db')
+    return query<Deal>(`SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE d.is_active = 1 AND (d.country = 'CA' OR d.country = 'BOTH') AND (d.expires_at IS NULL OR d.expires_at > NOW()) ORDER BY d.discount_percent DESC LIMIT 12`)
+  } catch { return [] }
 }
-async function getRetailers() {
-  return query<Retailer>(`SELECT r.*, COUNT(d.id) AS deal_count FROM retailers r LEFT JOIN deals d ON d.retailer_id = r.id AND d.is_active = 1 AND (d.expires_at IS NULL OR d.expires_at > NOW()) WHERE r.is_active = 1 GROUP BY r.id ORDER BY deal_count DESC LIMIT 20`)
+
+async function getRetailers(): Promise<Retailer[]> {
+  try {
+    const { query } = await import('@/lib/db')
+    return query<Retailer>(`SELECT r.*, COUNT(d.id) AS deal_count FROM retailers r LEFT JOIN deals d ON d.retailer_id = r.id AND d.is_active = 1 AND (d.expires_at IS NULL OR d.expires_at > NOW()) WHERE r.is_active = 1 GROUP BY r.id ORDER BY deal_count DESC LIMIT 20`)
+  } catch { return [] }
 }
+
 async function getTotalDeals(): Promise<number> {
-  const rows = await query<{ count: number }>(`SELECT COUNT(*) as count FROM deals WHERE is_active = 1 AND (expires_at IS NULL OR expires_at > NOW())`)
-  return rows[0]?.count || 0
+  try {
+    const { query } = await import('@/lib/db')
+    const rows = await query<{ count: number }>(`SELECT COUNT(*) as count FROM deals WHERE is_active = 1 AND (expires_at IS NULL OR expires_at > NOW())`)
+    return rows[0]?.count || 0
+  } catch { return 0 }
 }
 
 export default async function HomePage() {
