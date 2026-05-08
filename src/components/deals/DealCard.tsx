@@ -36,7 +36,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
   return (
     <div className="deal-card card-shine group cursor-pointer" onClick={handleClick}>
-      {/* IMAGE AREA */}
+      {/* IMAGE */}
       <div className="relative bg-brand-dark-4 h-44 overflow-hidden flex-shrink-0">
         {deal.image_url ? (
           <img src={deal.image_url} alt={deal.title}
@@ -45,7 +45,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           <div className="w-full h-full flex items-center justify-center opacity-20 text-5xl">🛍️</div>
         )}
 
-        {/* DISCOUNT BADGE */}
+        {/* DISCOUNT */}
         {discount > 0 && (
           <div className="absolute top-2 left-2 bg-brand-red text-white text-xs font-black
                           px-2.5 py-1 rounded-md uppercase tracking-wider shadow-glow">
@@ -53,11 +53,10 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* TYPE BADGE */}
+        {/* TYPE — only Flash and Clearance, no "Hot" */}
         <div className="absolute top-2 right-2">
           {deal.deal_type === 'flash'     && <span className="badge-flash">⚡ Flash</span>}
           {deal.deal_type === 'clearance' && <span className="badge-clear">Clearance</span>}
-          {deal.is_featured && deal.deal_type === 'daily' && <span className="badge-hot">🔥 Hot</span>}
         </div>
 
         {/* RETAILER */}
@@ -82,7 +81,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
         </h3>
 
         <div className="mt-auto space-y-2">
-          {/* PRICE ROW */}
           <div className="flex items-baseline gap-2">
             <span className="font-heading text-2xl font-900 text-brand-red leading-none">
               {formatPrice(deal.deal_price, deal.country)}
@@ -94,7 +92,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
             )}
           </div>
 
-          {/* SAVINGS + COUPON */}
           <div className="flex items-center justify-between">
             {savings && savings > 0 ? (
               <span className="text-brand-green text-xs font-bold">
@@ -109,21 +106,15 @@ export default function DealCard({ deal }: { deal: Deal }) {
             )}
           </div>
 
-          {/* TIMER */}
           {timeLeft && (
-            <div className="text-xs text-brand-red timer-pulse font-medium">
-              ⏱ Ends in {timeLeft}
-            </div>
+            <div className="text-xs text-brand-red timer-pulse font-medium">⏱ Ends in {timeLeft}</div>
           )}
 
-          {/* CTA BUTTON */}
-          <button
-            disabled={clicking}
+          <button disabled={clicking}
             className="w-full bg-brand-red/10 hover:bg-brand-red text-brand-red hover:text-white
                        border border-brand-red/30 hover:border-brand-red
                        text-xs font-bold uppercase tracking-wider py-2.5 rounded-lg
-                       transition-all duration-150 flex items-center justify-center gap-1.5"
-          >
+                       transition-all duration-150 flex items-center justify-center gap-1.5">
             {clicking ? 'Opening...' : 'Get Deal →'}
           </button>
         </div>
