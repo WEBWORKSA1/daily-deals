@@ -1,14 +1,16 @@
 import { Pool } from 'pg'
 
+const connectionString = process.env.DATABASE_URL ||
+  'postgresql://postgres:DailyDeals2024@db.vaxhdxgrdukqylrelwjk.supabase.co:5432/postgres'
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: { rejectUnauthorized: false }
 })
 
 export default pool
 
 export async function query<T = any>(sql: string, params?: any[]): Promise<T[]> {
-  // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
   let i = 0
   const pgSql = sql.replace(/\?/g, () => `$${++i}`)
   const result = await pool.query(pgSql, params)
