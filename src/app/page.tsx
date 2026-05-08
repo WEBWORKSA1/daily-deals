@@ -95,74 +95,65 @@ export default async function HomePage() {
   return (
     <>
       <Header />
-      {/* DEAL TICKER */}
       <DealTicker deals={[...featured, ...flash].slice(0, 10)} />
-
       <main>
         <HeroSection totalDeals={totalDeals} />
-
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
 
-          {/* SPOTLIGHT — BIG FEATURED DEAL */}
+          {/* SPOTLIGHT DEAL */}
           {spotlightDeal && (
             <section>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 rounded-full bg-brand-red" />
                 <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-                  🔥 Deal of the Day
+                  Featured Deal
                 </h2>
               </div>
               <FeaturedDeal deal={spotlightDeal} />
             </section>
           )}
 
-          {/* TOP DEALS GRID */}
+          {/* FEATURED DEALS */}
           {remainingFeatured.length > 0 && (
             <DealSection
-              title="Today's Top Deals"
-              subtitle="Hand-picked highest discounts"
+              title="🔥 Flash Deals"
               deals={remainingFeatured}
-              viewAllHref="/deals/today"
+              viewAllHref="/deals/flash"
+              highlight
             />
           )}
 
           {/* FLASH DEALS */}
           {flash.length > 0 && (
             <DealSection
-              title="⚡ Flash Deals"
-              subtitle="Limited time — grab them fast"
+              title="⚡ Limited Time"
               deals={flash}
               viewAllHref="/deals/flash"
-              highlight
             />
           )}
 
-          {/* US + CA SIDE BY SIDE ON DESKTOP */}
+          {/* US + CA SIDE BY SIDE */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <DealSection
               title="🇺🇸 US Deals"
-              subtitle="Top US retailer discounts"
               deals={usDeals.slice(0, 6)}
               viewAllHref="/deals/us"
             />
             <DealSection
               title="🇨🇦 Canadian Deals"
-              subtitle="Top Canadian retailer discounts"
               deals={caDeals.slice(0, 6)}
               viewAllHref="/deals/canada"
             />
           </div>
 
-          {/* NEWSLETTER */}
           <NewsletterSignup />
 
-          {/* STORE GRID */}
           <section>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1 h-8 rounded-full bg-brand-red" />
               <div>
                 <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-                  🏪 Shop by Store
+                  Shop by Store
                 </h2>
                 <p className="text-brand-gray text-xs mt-0.5">Browse deals from your favourite retailers</p>
               </div>
