@@ -9,6 +9,7 @@ import StoreGrid from '@/components/ui/StoreGrid'
 import DealSection from '@/components/ui/DealSection'
 import FeaturedDeal from '@/components/ui/FeaturedDeal'
 import DealTicker from '@/components/ui/DealTicker'
+import LocalDealsSection from '@/components/ui/LocalDealsSection'
 
 export const metadata: Metadata = {
   title: 'Daily.Deals — Best Deals Today | US & Canada',
@@ -43,6 +44,16 @@ async function getFlashDeals(): Promise<Deal[]> {
     const { data } = await supabase.from('deals')
       .select('*, retailers(name, slug, brand_color, affiliate_net)')
       .eq('is_active', true).eq('deal_type', 'flash')
+      .order('discount_percent', { ascending: false }).limit(10)
+    return mapDeals(data || [])
+  } catch { return [] }
+}
+
+async function getClearanceDeals(): Promise<Deal[]> {
+  try {
+    const { data } = await supabase.from('deals')
+      .select('*, retailers(name, slug, brand_color, affiliate_net)')
+      .eq('is_active', true).eq('deal_type', 'clearance')
       .order('discount_percent', { ascending: false }).limit(10)
     return mapDeals(data || [])
   } catch { return [] }
@@ -85,12 +96,11 @@ async function getTotalDeals(): Promise<number> {
 }
 
 export default async function HomePage() {
-  const [featured, flash, usDeals, caDeals, retailers, totalDeals] = await Promise.all([
-    getFeaturedDeals(), getFlashDeals(), getUSDeals(), getCADeals(), getRetailers(), getTotalDeals()
+  const [featured, flash, clearance, usDeals, caDeals, retailers, totalDeals] = await Promise.all([
+    getFeaturedDeals(), getFlashDeals(), getClearanceDeals(), getUSDeals(), getCADeals(), getRetailers(), getTotalDeals()
   ])
 
   const spotlightDeal = featured[0] || flash[0] || null
-  const remainingFeatured = featured.slice(1)
 
   return (
     <>
@@ -100,60 +110,65 @@ export default async function HomePage() {
         <HeroSection totalDeals={totalDeals} />
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
 
-          {/* SPOTLIGHT DEAL */}
+          {/* FEATURED DAILY DEAL — spotlight */}
           {spotlightDeal && (
             <section>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 rounded-full bg-brand-red" />
                 <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-                  Featured Deal
+                  ⭐ Featured Daily Deal
                 </h2>
               </div>
               <FeaturedDeal deal={spotlightDeal} />
             </section>
           )}
 
-          {/* FEATURED DEALS */}
-          {remainingFeatured.length > 0 && (
-            <DealSection
-              title="🔥 Flash Deals"
-              deals={remainingFeatured}
-              viewAllHref="/deals/flash"
-              highlight
-            />
-          )}
+          {/* DAILY LOCAL DEALS — 3 tiers, postal code aware */}
+          <LocalDealsSection />
 
-          {/* FLASH DEALS */}
+          {/* DAILY FLASH DEALS */}
           {flash.length > 0 && (
             <DealSection
-              title="⚡ Limited Time"
+              title="⚡ Daily Flash Deals"
               deals={flash}
               viewAllHref="/deals/flash"
+              highlight
             />
           )}
 
           {/* US + CA SIDE BY SIDE */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <DealSection
-              title="🇺🇸 US Deals"
+              title="🇺🇸 Daily US Deals"
               deals={usDeals.slice(0, 6)}
               viewAllHref="/deals/us"
             />
             <DealSection
-              title="🇨🇦 Canadian Deals"
+              title="🇨🇦 Daily Canadian Deals"
               deals={caDeals.slice(0, 6)}
               viewAllHref="/deals/canada"
             />
           </div>
 
+          {/* DAILY CLEARANCE */}
+          {clearance.length > 0 && (
+            <DealSection
+              title="🏷️ Daily Clearance Deals"
+              deals={clearance}
+              viewAllHref="/deals/clearance"
+            />
+          )}
+
+          {/* NEWSLETTER */}
           <NewsletterSignup />
 
+          {/* STORES */}
           <section>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1 h-8 rounded-full bg-brand-red" />
               <div>
                 <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-                  Shop by Store
+                  🏪 Shop Daily Deals by Store
                 </h2>
                 <p className="text-brand-gray text-xs mt-0.5">Browse deals from your favourite retailers</p>
               </div>
