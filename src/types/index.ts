@@ -13,6 +13,11 @@ export interface Retailer {
   affiliate_net: AffiliateNet
   brand_color: string
   is_active: boolean
+  latitude?: number | null
+  longitude?: number | null
+  postal_code?: string | null
+  city?: string | null
+  has_physical_stores?: boolean
 }
 
 export interface Deal {
@@ -26,6 +31,7 @@ export interface Deal {
   retailer_name?: string
   retailer_slug?: string
   retailer_brand_color?: string
+  affiliate_net?: AffiliateNet
   category: string
   image_url: string | null
   affiliate_url: string
@@ -39,6 +45,12 @@ export interface Deal {
   expires_at: string | null
   click_count: number
   created_at: string
+  is_online_only?: boolean
+  store_latitude?: number | null
+  store_longitude?: number | null
+  store_city?: string | null
+  store_postal?: string | null
+  distance_km?: number
 }
 
 export interface Location {
@@ -59,4 +71,6 @@ export interface UserLocation {
   postalCode: string
   country: 'US' | 'CA'
   isDetected: boolean
+  latitude?: number
+  longitude?: number
 }
