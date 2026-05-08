@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/db'
+import { getAnchor, distanceKm } from '@/lib/storeAnchors'
 
-// Haversine distance in km
-function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -18,13 +10,12 @@ export async function GET(request: Request) {
   const lng = parseFloat(searchParams.get('lng') || '0')
   const country = searchParams.get('country') || 'BOTH'
 
-  // Fetch ALL active deals with retailer info
   const { data, error } = await supabase
     .from('deals')
     .select('*, retailers(name, slug, brand_color, affiliate_net, country)')
     .eq('is_active', true)
     .order('discount_percent', { ascending: false })
-    .limit(100)
+    .limit(200)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -36,31 +27,39 @@ export async function GET(request: Request) {
     affiliate_net: d.retailers?.affiliate_net,
   }))
 
-  // 3-tier classification
-  const local: any[] = []      // ≤5km
-  const nearby: any[] = []     // 5-50km
-  const national: any[] = []   // online only or no geo
+  const local: any[] = []
+  const nearby: any[] = []
+  const national: any[] = []
 
+  // No location set → return top national deals
   if (!lat || !lng) {
-    // No location — return all national online deals
-    return NextResponse.json({
-      local: [],
-      nearby: [],
-      national: allDeals.filter((d: any) =>
-        d.is_online_only !== false && (country === 'BOTH' || d.country === country || d.country === 'BOTH')
-      ).slice(0, 8),
-    })
+    const filtered = allDeals.filter((d: any) =>
+      country === 'BOTH' || d.country === country || d.country === 'BOTH'
+    )
+    return NextResponse.json({ local: [], nearby: [], national: filtered.slice(0, 8) })
   }
 
+  // Classify each deal by retailer's anchor distance
   for (const deal of allDeals) {
-    if (deal.is_online_only === false && deal.store_latitude && deal.store_longitude) {
-      const dist = distanceKm(lat, lng, deal.store_latitude, deal.store_longitude)
-      const dealWithDist = { ...deal, distance_km: Math.round(dist * 10) / 10 }
-      if (dist <= 5) local.push(dealWithDist)
-      else if (dist <= 50) nearby.push(dealWithDist)
-      else national.push(deal)
-    } else {
-      // Online or unmapped — national tier
+    const anchor = getAnchor(deal.retailer_slug)
+    if (!anchor || anchor.online) {
+      // Online retailer — national tier (must match user's country)
+      if (country === 'BOTH' || deal.country === country || deal.country === 'BOTH') {
+        national.push(deal)
+      }
+      continue
+    }
+
+    const dist = distanceKm(lat, lng, anchor.lat, anchor.lng)
+    const dealWithDist = {
+      ...deal,
+      distance_km: Math.round(dist * 10) / 10,
+      store_city: anchor.city,
+    }
+    if (dist <= 5) local.push(dealWithDist)
+    else if (dist <= 50) nearby.push(dealWithDist)
+    else {
+      // Out of radius — fall to national IF country matches
       if (country === 'BOTH' || deal.country === country || deal.country === 'BOTH') {
         national.push(deal)
       }
