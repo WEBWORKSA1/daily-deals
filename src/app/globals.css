@@ -30,7 +30,7 @@
 
   /* DEAL CARD */
   .deal-card {
-    @apply bg-brand-dark-3 border border-white/8 rounded-xl overflow-hidden
+    @apply bg-brand-dark-3 border border-white/10 rounded-xl overflow-hidden
            hover:border-brand-red/50 hover:shadow-deal transition-all duration-200
            flex flex-col;
   }
@@ -50,15 +50,10 @@
 
   /* SECTION */
   .section-title {
-    @apply font-heading text-3xl font-800 text-white uppercase tracking-tight;
+    @apply font-heading text-3xl font-extrabold text-white uppercase tracking-tight;
   }
   .section-subtitle {
     @apply text-brand-gray text-sm font-medium;
-  }
-
-  /* CARD GRID */
-  .deal-grid {
-    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4;
   }
 
   /* INPUT */
@@ -68,17 +63,9 @@
            transition-colors w-full;
   }
 
-  /* TICKER BAR */
-  .ticker-wrap {
-    @apply overflow-hidden whitespace-nowrap;
-  }
-  .ticker-content {
-    @apply inline-block animate-ticker;
-  }
-
   /* STAT PILL */
   .stat-pill {
-    @apply flex items-center gap-2 bg-brand-dark-4 border border-white/8
+    @apply flex items-center gap-2 bg-brand-dark-4 border border-white/10
            rounded-full px-4 py-2 text-sm text-brand-gray-2;
   }
 }
@@ -126,3 +113,10 @@
   50%       { opacity: 0.8; transform: scale(1.05); }
 }
 .fire-icon { animation: flicker 1.5s ease-in-out infinite; }
+
+/* TICKER */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker { animation: ticker 20s linear infinite; }
