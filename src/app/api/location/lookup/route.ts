@@ -1,37 +1,30 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/db'
+import { lookupPostal } from '@/lib/postalCodes'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const code = (searchParams.get('code') || '').toUpperCase().replace(/\s/g, '')
+  const code = searchParams.get('code') || ''
   if (!code) return NextResponse.json({ error: 'No code provided' }, { status: 400 })
 
-  // For Canadian postal codes, take first 3 chars (FSA)
-  const isCanadian = /^[A-Z]\d[A-Z]/.test(code)
-  const lookupCode = isCanadian ? code.substring(0, 3) : code
-
-  const { data, error } = await supabase
-    .from('postal_code_locations')
-    .select('*')
-    .eq('code', lookupCode)
-    .single()
-
-  if (error || !data) {
+  const record = lookupPostal(code)
+  if (!record) {
     return NextResponse.json({
       found: false,
-      code: lookupCode,
-      message: 'Postal/ZIP not in our database yet. Showing nearest national deals.'
+      code: code.toUpperCase(),
+      message: 'Postal/ZIP not in our database yet. Showing top national deals.'
     })
   }
 
   return NextResponse.json({
     found: true,
-    code: lookupCode,
-    country: data.country,
-    city: data.city,
-    province_state: data.province_state,
-    state_code: data.state_code,
-    latitude: parseFloat(data.latitude),
-    longitude: parseFloat(data.longitude),
+    code: record.code,
+    country: record.country,
+    city: record.city,
+    province_state: record.province_state,
+    state_code: record.state_code,
+    latitude: record.latitude,
+    longitude: record.longitude,
   })
 }
