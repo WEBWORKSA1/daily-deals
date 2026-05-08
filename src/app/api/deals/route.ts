@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/db'
-import { Deal } from '@/types'
+import { supabase } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -9,30 +8,36 @@ export async function GET(req: NextRequest) {
   const retailer = searchParams.get('retailer')
   const dealType = searchParams.get('deal_type')
   const featured = searchParams.get('featured')
-  const search   = searchParams.get('search')
   const national = searchParams.get('national')
   const limit    = Math.min(Number(searchParams.get('limit') || 20), 100)
   const offset   = Number(searchParams.get('offset') || 0)
 
-  const conditions = ['d.is_active = 1', '(d.expires_at IS NULL OR d.expires_at > NOW())']
-  const params: any[] = []
-
-  if (country && country !== 'BOTH') { conditions.push("(d.country = ? OR d.country = 'BOTH')"); params.push(country) }
-  if (category) { conditions.push('d.category = ?'); params.push(category) }
-  if (retailer) { conditions.push('r.slug = ?'); params.push(retailer) }
-  if (dealType)  { conditions.push('d.deal_type = ?'); params.push(dealType) }
-  if (featured === '1') conditions.push('d.is_featured = 1')
-  if (national === '1') conditions.push('d.is_national = 1')
-  if (search) { conditions.push('MATCH(d.title, d.description) AGAINST(? IN BOOLEAN MODE)'); params.push(`${search}*`) }
-
   try {
-    const deals = await query<Deal>(
-      `SELECT d.*, r.name AS retailer_name, r.slug AS retailer_slug, r.brand_color AS retailer_brand_color, r.affiliate_net FROM deals d JOIN retailers r ON d.retailer_id = r.id WHERE ${conditions.join(' AND ')} ORDER BY d.is_featured DESC, d.discount_percent DESC, d.created_at DESC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
-    )
+    let q = supabase
+      .from('deals')
+      .select('*, retailers(name, slug, brand_color, affiliate_net)')
+      .eq('is_active', true)
+      .range(offset, offset + limit - 1)
+      .order('discount_percent', { ascending: false })
+
+    if (country && country !== 'BOTH') q = q.in('country', [country, 'BOTH'])
+    if (category) q = q.eq('category', category)
+    if (dealType)  q = q.eq('deal_type', dealType)
+    if (featured === '1') q = q.eq('is_featured', true)
+    if (national === '1') q = q.eq('is_national', true)
+
+    const { data, error } = await q
+    if (error) throw error
+
+    const deals = (data || []).map((d: any) => ({
+      ...d,
+      retailer_name: d.retailers?.name,
+      retailer_slug: d.retailers?.slug,
+      retailer_brand_color: d.retailers?.brand_color,
+    }))
+
     return NextResponse.json({ deals, count: deals.length })
-  } catch (err) {
-    console.error('Deals API error:', err)
-    return NextResponse.json({ error: 'Failed to fetch deals' }, { status: 500 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
