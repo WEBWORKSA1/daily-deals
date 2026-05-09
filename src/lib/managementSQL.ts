@@ -95,4 +95,21 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       );
     `,
   },
+  {
+    id: '005_add_hotness_columns',
+    name: 'Add hotness score + verified flags to deals',
+    sql: `
+      ALTER TABLE public.deals
+        ADD COLUMN IF NOT EXISTS hotness_score INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS hotness_updated_at TIMESTAMP DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS is_editors_choice BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS save_count INTEGER DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_deals_hotness
+        ON public.deals(hotness_score DESC) WHERE is_active = TRUE;
+      CREATE INDEX IF NOT EXISTS idx_deals_editors_choice
+        ON public.deals(is_editors_choice) WHERE is_editors_choice = TRUE;
+    `,
+  },
 ]
