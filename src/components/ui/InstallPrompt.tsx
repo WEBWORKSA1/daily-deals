@@ -22,7 +22,7 @@ export default function InstallPrompt() {
     const isStandalone = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches
     if (isIOSDevice && !isStandalone) {
       setIsIOS(true)
-      setTimeout(() => setShow(true), 8000) // delay so user has time to engage first
+      setTimeout(() => setShow(true), 8000)
       return
     }
 
@@ -54,7 +54,7 @@ export default function InstallPrompt() {
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm bg-white text-gray-900 rounded-lg shadow-2xl p-4 z-50 border-l-4 border-brand-red">
       <div className="flex items-start gap-3">
-        <img src="/icon-192.png" alt="" className="w-12 h-12 rounded flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <img src="/icon.svg" alt="" className="w-12 h-12 rounded flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="font-heading font-900 text-base">Install Daily.Deals</div>
           {isIOS ? (
