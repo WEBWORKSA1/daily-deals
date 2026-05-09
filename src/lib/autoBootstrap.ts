@@ -1,16 +1,26 @@
-// Auto-bootstrap: ensures database is migrated and seeded on first cold start.
+// Auto-bootstrap: ensures database is migrated, seeded, and hotness scored.
 // Safe to call on every request — uses a cached flag and idempotent operations.
 
 import { supabase } from './db'
 import { runManagementSQL, MIGRATIONS } from './managementSQL'
 import { allPostals } from './postalCodes'
 import { STORE_ANCHORS } from './storeAnchors'
+import { computeHotness } from './hotness'
 
 let bootstrapPromise: Promise<{ ok: boolean, log: any[] }> | null = null
 let bootstrapCompleted = false
+let lastHotnessUpdate = 0
+const HOTNESS_TTL = 15 * 60 * 1000 // 15 min
 
 export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
-  if (bootstrapCompleted) return Promise.resolve({ ok: true, log: ['cached'] })
+  if (bootstrapCompleted) {
+    // Recompute hotness if stale
+    if (Date.now() - lastHotnessUpdate > HOTNESS_TTL) {
+      lastHotnessUpdate = Date.now()
+      recomputeHotness().catch(() => {})
+    }
+    return Promise.resolve({ ok: true, log: ['cached'] })
+  }
   if (bootstrapPromise) return bootstrapPromise
 
   bootstrapPromise = doBootstrap()
@@ -20,7 +30,6 @@ export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
 async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
   const log: any[] = []
 
-  // Skip entirely if no PAT — still let site work with anon key
   if (!process.env.SUPABASE_PAT) {
     log.push({ step: 'skip', reason: 'no SUPABASE_PAT — running in basic mode' })
     bootstrapCompleted = true
@@ -28,7 +37,7 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
   }
 
   try {
-    // Step 1: Ensure migrations tracking table exists
+    // Ensure tracking table
     const trackingMigration = MIGRATIONS.find(m => m.id === '004_create_migrations_log')
     if (trackingMigration) {
       const r = await runManagementSQL(trackingMigration.sql)
@@ -36,11 +45,9 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
       if (!r.ok) { bootstrapCompleted = true; return { ok: false, log } }
     }
 
-    // Step 2: Get applied migrations
     const { data: appliedRows } = await supabase.from('_dd_migrations').select('id')
     const applied = new Set((appliedRows || []).map((r: any) => r.id))
 
-    // Step 3: Run pending migrations
     for (const m of MIGRATIONS) {
       if (applied.has(m.id)) continue
       const r = await runManagementSQL(m.sql)
@@ -53,7 +60,7 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
       log.push({ step: m.id, ok: true })
     }
 
-    // Step 4: Seed postal codes (only if table is empty)
+    // Seed postal codes
     const { count: postalCount } = await supabase
       .from('postal_code_locations')
       .select('*', { count: 'exact', head: true })
@@ -77,7 +84,7 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
       log.push({ step: 'seed_postals', ok: true, skipped: true, existing: postalCount })
     }
 
-    // Step 5: Geo-tag retailers (only those without geo set)
+    // Tag retailers
     let retailersTagged = 0
     for (const [slug, anchor] of Object.entries(STORE_ANCHORS)) {
       const payload: any = {
@@ -92,7 +99,7 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
     }
     log.push({ step: 'tag_retailers', tagged: retailersTagged })
 
-    // Step 6: Geo-tag deals
+    // Tag deals
     const { data: deals } = await supabase
       .from('deals')
       .select('id, retailers(slug)')
@@ -123,7 +130,33 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
     }
     log.push({ step: 'tag_deals', total: deals?.length || 0, online, physical })
 
+    // Initial hotness computation
+    const hr = await recomputeHotness()
+    log.push({ step: 'compute_hotness', ...hr })
+
+    // Auto-mark top 3 by discount as Editor's Choice (initial seed)
+    try {
+      const { data: topDiscounts } = await supabase
+        .from('deals')
+        .select('id')
+        .eq('is_active', true)
+        .eq('is_featured', true)
+        .order('discount_percent', { ascending: false })
+        .limit(3)
+      if (topDiscounts && topDiscounts.length > 0) {
+        const ids = topDiscounts.map((d: any) => d.id)
+        await supabase
+          .from('deals')
+          .update({ is_editors_choice: true })
+          .in('id', ids)
+        log.push({ step: 'editors_choice_seed', tagged: ids.length })
+      }
+    } catch (e: any) {
+      log.push({ step: 'editors_choice_seed', error: e?.message })
+    }
+
     bootstrapCompleted = true
+    lastHotnessUpdate = Date.now()
     return { ok: true, log }
   } catch (e: any) {
     log.push({ step: 'exception', error: e?.message || String(e) })
@@ -132,6 +165,37 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
   }
 }
 
+// Recompute hotness scores for all active deals
+async function recomputeHotness(): Promise<{ updated: number, error?: string }> {
+  try {
+    const { data: deals, error } = await supabase
+      .from('deals')
+      .select('id, click_count, view_count, save_count, discount_percent, original_price, deal_price, is_featured, is_editors_choice, deal_type, expires_at, created_at')
+      .eq('is_active', true)
+    if (error) return { updated: 0, error: error.message }
+
+    let updated = 0
+    for (const d of (deals || []) as any[]) {
+      const score = computeHotness(d)
+      const { error: upErr } = await supabase
+        .from('deals')
+        .update({
+          hotness_score: score,
+          hotness_updated_at: new Date().toISOString(),
+        })
+        .eq('id', d.id)
+      if (!upErr) updated++
+    }
+    return { updated }
+  } catch (e: any) {
+    return { updated: 0, error: e?.message || String(e) }
+  }
+}
+
 export function getBootstrapStatus() {
-  return { completed: bootstrapCompleted, inFlight: !!bootstrapPromise && !bootstrapCompleted }
+  return {
+    completed: bootstrapCompleted,
+    inFlight: !!bootstrapPromise && !bootstrapCompleted,
+    lastHotnessUpdate: lastHotnessUpdate ? new Date(lastHotnessUpdate).toISOString() : null,
+  }
 }
