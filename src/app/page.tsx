@@ -121,7 +121,6 @@ async function getTotalDeals(): Promise<number> {
 }
 
 export default async function HomePage() {
-  // Auto-run migrations + seeding + hotness scoring on cold start. Cached after.
   ensureBootstrapped().catch(() => {})
 
   const [featured, hottest, editorsChoice, flash, clearance, usDeals, caDeals, retailers, totalDeals] = await Promise.all([
@@ -136,18 +135,23 @@ export default async function HomePage() {
     getTotalDeals()
   ])
 
-  const spotlightDeal = featured[0] || hottest[0] || flash[0] || null
+  // Spotlight = first deal with a real image_url, falling back through tiers
+  const spotlightCandidates = [...featured, ...hottest, ...flash]
+  const spotlightDeal = spotlightCandidates.find(d => d.image_url) || spotlightCandidates[0] || null
   const noDealsYet = totalDeals === 0
+
+  // Body deal sections render the spotlight too — but skip the one we used in the hero
+  const bodySpotlight = spotlightDeal
+  const bodySpotlightId = bodySpotlight?.id
 
   return (
     <>
       <Header />
       {!noDealsYet && <DealTicker deals={[...featured, ...flash].slice(0, 10)} />}
       <main>
-        <HeroSection totalDeals={totalDeals} />
+        <HeroSection totalDeals={totalDeals} spotlightDeal={spotlightDeal} />
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
 
-          {/* EMPTY STATE — no curated deals yet (first run, or before nightly cron fires) */}
           {noDealsYet && (
             <section className="border border-rule p-10 lg:p-14 text-center max-w-2xl mx-auto">
               <div className="section-eyebrow mb-4">TONIGHT&apos;S EDITION DROPS AT MIDNIGHT EST</div>
@@ -159,31 +163,28 @@ export default async function HomePage() {
             </section>
           )}
 
-          {/* FEATURED DAILY DEAL — spotlight */}
-          {spotlightDeal && (
+          {/* FEATURED DAILY DEAL — body spotlight (richer than hero card) */}
+          {bodySpotlight && (
             <section>
               <div className="section-eyebrow mb-2">SECTION 01 · TODAY&apos;S SPOTLIGHT</div>
               <h2 className="section-h2 mb-1">Featured Daily Deal</h2>
               <p className="section-sub mb-7">Our editors&apos; pick of the day. Verified, vetted, and worth your time.</p>
-              <FeaturedDeal deal={spotlightDeal} />
+              <FeaturedDeal deal={bodySpotlight} />
             </section>
           )}
 
-          {/* DAILY LOCAL DEALS — 3 tiers, postal code aware */}
           {!noDealsYet && <LocalDealsSection />}
 
-          {/* DAILY HOT DEALS — sorted by hotness score */}
           {hottest.length > 0 && (
             <DealSection
               title="Daily Hot Deals"
               subtitle="The eight deals our editors love most this morning, ranked by Hotness Score."
-              deals={hottest}
+              deals={hottest.filter(d => d.id !== bodySpotlightId)}
               viewAllHref="/deals/hot"
               sectionNumber="02"
             />
           )}
 
-          {/* EDITOR'S CHOICE */}
           {editorsChoice.length > 0 && (
             <DealSection
               title="Editor's Choice"
@@ -194,7 +195,6 @@ export default async function HomePage() {
             />
           )}
 
-          {/* DAILY FLASH DEALS */}
           {flash.length > 0 && (
             <DealSection
               title="Daily Flash Deals"
@@ -206,7 +206,6 @@ export default async function HomePage() {
             />
           )}
 
-          {/* US + CA SIDE BY SIDE */}
           {(usDeals.length > 0 || caDeals.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               {usDeals.length > 0 && (
@@ -230,7 +229,6 @@ export default async function HomePage() {
             </div>
           )}
 
-          {/* DAILY CLEARANCE */}
           {clearance.length > 0 && (
             <DealSection
               title="Daily Clearance Deals"
@@ -241,10 +239,8 @@ export default async function HomePage() {
             />
           )}
 
-          {/* NEWSLETTER — only show inline on homepage if we have deals (footer always shows) */}
           {!noDealsYet && <NewsletterSignup />}
 
-          {/* STORES */}
           {retailers.length > 0 && (
             <section>
               <div className="section-eyebrow mb-2">SECTION 07 · DIRECTORY</div>
