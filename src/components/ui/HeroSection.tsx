@@ -35,11 +35,10 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
               }
             </div>
 
-            {/* HEADLINE */}
-            <h1 className="font-heading font-900 uppercase leading-none tracking-tight mb-6">
-              <span className="block text-6xl sm:text-7xl lg:text-8xl text-white">The Best</span>
-              <span className="block text-6xl sm:text-7xl lg:text-8xl text-brand-red">Deals.</span>
-              <span className="block text-6xl sm:text-7xl lg:text-8xl text-white">Daily.</span>
+            {/* HEADLINE — brand promise */}
+            <h1 className="font-heading font-900 uppercase leading-[0.9] tracking-tight mb-6">
+              <span className="block text-6xl sm:text-7xl lg:text-8xl text-white">Daily Deals.</span>
+              <span className="block text-6xl sm:text-7xl lg:text-8xl text-brand-red">Every Day.</span>
             </h1>
 
             <p className="text-brand-gray-2 text-lg leading-relaxed mb-8 max-w-lg">
