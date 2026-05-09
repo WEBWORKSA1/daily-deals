@@ -4,13 +4,16 @@ const AMAZON_US_TAG = process.env.NEXT_PUBLIC_AMAZON_US_TAG || 'dailydeals-us-20
 const AMAZON_CA_TAG = process.env.NEXT_PUBLIC_AMAZON_CA_TAG || 'dailydeals-ca-20'
 
 // Skimlinks publisher ID. Pattern A redirect URL works without an API key.
-// Falls back to env var; the literal default is webworksa1's id from the script tag.
 const SKIMLINKS_ID = process.env.NEXT_PUBLIC_SKIMLINKS_ID
   || process.env.SKIMLINKS_PUBLISHER_ID
   || '302790X1790814'
 
 // Hosts where Amazon Associates handles attribution — don't double-wrap with Skimlinks
 const AMAZON_HOSTS = ['amazon.com', 'amazon.ca', 'amazon.co.uk', 'a.co', 'amzn.to', 'amzn.com']
+
+// Networks that ship pre-tracked URLs — don't wrap them again with Skimlinks.
+// Set is widened to 'string' so TS doesn't complain when AffiliateNet's union doesn't include some value.
+const PRETRACKED_NETS: ReadonlyArray<string> = ['cj', 'impact', 'shareasale', 'awin', 'rakuten']
 
 function isAmazon(host: string): boolean {
   const h = host.toLowerCase()
@@ -37,14 +40,16 @@ export function buildAffiliateLink(deal: Deal, affiliateNet: AffiliateNet): stri
       return parsed.toString()
     }
 
-    // CJ / Impact / ShareASale / Awin — trust the existing tracked URL, return as-is.
+    // CJ / Impact / ShareASale / Awin / Rakuten — trust the existing tracked URL.
     // (When the user signs into these networks, the URLs will already be pre-tracked.)
-    if (affiliateNet === 'cj' || affiliateNet === 'impact' || affiliateNet === 'shareasale' || affiliateNet === 'awin') {
+    // Compare via the widened string set so TS is happy regardless of how AffiliateNet evolves.
+    if (PRETRACKED_NETS.includes(affiliateNet as string)) {
       return deal.affiliate_url
     }
 
-    // Everything else (affiliateNet === 'direct' or unknown) → route through Skimlinks.
-    // This monetizes ANY retailer URL via Skimlinks' merchant network, instantly.
+    // Everything else (affiliateNet === 'direct' | 'skimlinks' | unknown)
+    // → route through Skimlinks. This monetizes ANY retailer URL via Skimlinks'
+    // merchant network, instantly.
     return wrapWithSkimlinks(deal.affiliate_url)
   } catch {
     return deal.affiliate_url

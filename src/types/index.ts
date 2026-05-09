@@ -1,6 +1,16 @@
 export type Country = 'US' | 'CA' | 'BOTH'
 export type DealType = 'flash' | 'daily' | 'clearance' | 'coupon'
-export type AffiliateNet = 'amazon' | 'cj' | 'shareasale' | 'direct'
+// All affiliate networks we may route through. 'direct' = no specific network
+// (will be wrapped via Skimlinks). 'amazon' bypasses Skimlinks (Amazon disallows mixing).
+export type AffiliateNet =
+  | 'amazon'
+  | 'cj'
+  | 'impact'
+  | 'shareasale'
+  | 'awin'
+  | 'rakuten'
+  | 'skimlinks'
+  | 'direct'
 
 export interface Retailer {
   id: number
