@@ -1,7 +1,7 @@
 // Service worker for Daily.Deals PWA — minimal offline support + cache control
 
 const CACHE_NAME = 'daily-deals-v1'
-const STATIC_CACHE = ['/', '/manifest.json']
+const STATIC_CACHE = ['/', '/manifest.json', '/icon.svg']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -49,7 +49,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(request).then(cached => {
       if (cached) return cached
       return fetch(request).then(res => {
-        if (res.ok && (request.url.includes('/_next/static/') || /\.(png|jpg|svg|woff2|css|js)$/.test(request.url))) {
+        if (res.ok && (request.url.includes('/_next/static/') || /\.(svg|png|jpg|woff2|css|js)$/.test(request.url))) {
           const copy = res.clone()
           caches.open(CACHE_NAME).then(c => c.put(request, copy))
         }
@@ -66,8 +66,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'New Deal', {
       body: data.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icon.svg',
+      badge: '/icon.svg',
       data: { url: data.url || '/' },
     })
   )
