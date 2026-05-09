@@ -7,7 +7,6 @@ import { CATEGORIES } from '@/lib/utils'
 export default function Header() {
   const { location, loading, error, setManualLocation } = useLocation()
   const [showModal, setShowModal] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
   const [input, setInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [searchQ, setSearchQ] = useState('')
@@ -84,8 +83,8 @@ export default function Header() {
               </button>
 
               {/* CTA */}
-              <Link href="/deals/today" className="btn-primary hidden sm:inline-flex">
-                Today's Deals
+              <Link href="/deals/hot" className="btn-primary hidden sm:inline-flex">
+                🔥 Hot Deals
               </Link>
             </div>
           </div>
@@ -95,11 +94,17 @@ export default function Header() {
         <div className="border-t border-white/5 bg-brand-dark-2">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-              <Link href="/deals/today"
+              <Link href="/deals/hot"
                 className="flex-shrink-0 text-xs font-bold text-brand-red uppercase tracking-wider
                            bg-brand-red/10 border border-brand-red/20 px-3 py-1.5 rounded-md
                            hover:bg-brand-red/20 transition-colors">
                 🔥 Hot Deals
+              </Link>
+              <Link href="/deals/today"
+                className="flex-shrink-0 text-xs font-bold text-white uppercase tracking-wider
+                           bg-white/5 border border-white/10 px-3 py-1.5 rounded-md
+                           hover:bg-white/10 transition-colors">
+                Today
               </Link>
               <Link href="/deals/flash"
                 className="flex-shrink-0 text-xs font-bold text-brand-gold uppercase tracking-wider
