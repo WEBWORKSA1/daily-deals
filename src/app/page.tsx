@@ -137,99 +137,122 @@ export default async function HomePage() {
   ])
 
   const spotlightDeal = featured[0] || hottest[0] || flash[0] || null
+  const noDealsYet = totalDeals === 0
 
   return (
     <>
       <Header />
-      <DealTicker deals={[...featured, ...flash].slice(0, 10)} />
+      {!noDealsYet && <DealTicker deals={[...featured, ...flash].slice(0, 10)} />}
       <main>
         <HeroSection totalDeals={totalDeals} />
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
+
+          {/* EMPTY STATE — no curated deals yet (first run, or before nightly cron fires) */}
+          {noDealsYet && (
+            <section className="border border-rule p-10 lg:p-14 text-center max-w-2xl mx-auto">
+              <div className="section-eyebrow mb-4">TONIGHT&apos;S EDITION DROPS AT MIDNIGHT EST</div>
+              <h2 className="font-serif text-3xl text-ink mb-3">The first daily edition is on its way.</h2>
+              <p className="text-ink-2 mb-6">
+                Our editors are curating today&apos;s deals from 15 major retailers across the US and Canada. The first batch publishes shortly. Check back at the top of the hour, or subscribe below to get them in your inbox.
+              </p>
+              <NewsletterSignup />
+            </section>
+          )}
 
           {/* FEATURED DAILY DEAL — spotlight */}
           {spotlightDeal && (
             <section>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 rounded-full bg-brand-red" />
-                <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-                  ⭐ Featured Daily Deal
-                </h2>
-              </div>
+              <div className="section-eyebrow mb-2">SECTION 01 · TODAY&apos;S SPOTLIGHT</div>
+              <h2 className="section-h2 mb-1">Featured Daily Deal</h2>
+              <p className="section-sub mb-7">Our editors&apos; pick of the day. Verified, vetted, and worth your time.</p>
               <FeaturedDeal deal={spotlightDeal} />
             </section>
           )}
 
           {/* DAILY LOCAL DEALS — 3 tiers, postal code aware */}
-          <LocalDealsSection />
+          {!noDealsYet && <LocalDealsSection />}
 
           {/* DAILY HOT DEALS — sorted by hotness score */}
           {hottest.length > 0 && (
             <DealSection
-              title="🔥 Daily Hot Deals"
+              title="Daily Hot Deals"
+              subtitle="The eight deals our editors love most this morning, ranked by Hotness Score."
               deals={hottest}
               viewAllHref="/deals/hot"
-              highlight
+              sectionNumber="02"
             />
           )}
 
           {/* EDITOR'S CHOICE */}
           {editorsChoice.length > 0 && (
             <DealSection
-              title="⭐ Editor's Choice"
+              title="Editor's Choice"
+              subtitle="Hand-picked by the editorial desk."
               deals={editorsChoice}
               viewAllHref="/deals/hot"
+              sectionNumber="03"
             />
           )}
 
           {/* DAILY FLASH DEALS */}
           {flash.length > 0 && (
             <DealSection
-              title="⚡ Daily Flash Deals"
+              title="Daily Flash Deals"
+              subtitle="Time-sensitive markdowns. Move fast."
               deals={flash}
               viewAllHref="/deals/flash"
+              sectionNumber="04"
               highlight
             />
           )}
 
           {/* US + CA SIDE BY SIDE */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <DealSection
-              title="🇺🇸 Daily US Deals"
-              deals={usDeals.slice(0, 6)}
-              viewAllHref="/deals/us"
-            />
-            <DealSection
-              title="🇨🇦 Daily Canadian Deals"
-              deals={caDeals.slice(0, 6)}
-              viewAllHref="/deals/canada"
-            />
-          </div>
+          {(usDeals.length > 0 || caDeals.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {usDeals.length > 0 && (
+                <DealSection
+                  title="Daily US Deals"
+                  subtitle="The best discounts shipping in the United States today."
+                  deals={usDeals.slice(0, 6)}
+                  viewAllHref="/deals/us"
+                  sectionNumber="05·US"
+                />
+              )}
+              {caDeals.length > 0 && (
+                <DealSection
+                  title="Daily Canadian Deals"
+                  subtitle="Today's best across Canada — Toronto to Vancouver, Halifax to Calgary."
+                  deals={caDeals.slice(0, 6)}
+                  viewAllHref="/deals/canada"
+                  sectionNumber="05·CA"
+                />
+              )}
+            </div>
+          )}
 
           {/* DAILY CLEARANCE */}
           {clearance.length > 0 && (
             <DealSection
-              title="🏷️ Daily Clearance Deals"
+              title="Daily Clearance Deals"
+              subtitle="Year-end markdowns and final-call inventory."
               deals={clearance}
               viewAllHref="/deals/clearance"
+              sectionNumber="06"
             />
           )}
 
-          {/* NEWSLETTER */}
-          <NewsletterSignup />
+          {/* NEWSLETTER — only show inline on homepage if we have deals (footer always shows) */}
+          {!noDealsYet && <NewsletterSignup />}
 
           {/* STORES */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-8 rounded-full bg-brand-red" />
-              <div>
-                <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-                  🏪 Shop Daily Deals by Store
-                </h2>
-                <p className="text-brand-gray text-xs mt-0.5">Browse deals from your favourite retailers</p>
-              </div>
-            </div>
-            <StoreGrid retailers={retailers} />
-          </section>
+          {retailers.length > 0 && (
+            <section>
+              <div className="section-eyebrow mb-2">SECTION 07 · DIRECTORY</div>
+              <h2 className="section-h2 mb-1">Daily Deals by Store</h2>
+              <p className="section-sub mb-7">Browse deals from your favorite retailers across North America.</p>
+              <StoreGrid retailers={retailers} />
+            </section>
+          )}
 
         </div>
       </main>
