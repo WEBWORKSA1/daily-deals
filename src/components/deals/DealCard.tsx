@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Deal } from '@/types'
 import { formatPrice, getTimeRemaining } from '@/lib/utils'
+import { hotnessTier } from '@/lib/hotness'
 
 export default function DealCard({ deal }: { deal: Deal }) {
   const [timeLeft, setTimeLeft] = useState<string | null>(null)
@@ -34,6 +35,10 @@ export default function DealCard({ deal }: { deal: Deal }) {
     : 0)
   const savings = deal.original_price ? deal.original_price - deal.deal_price : null
 
+  // Hotness tier — only show badge for TRENDING or higher (45+)
+  const score = deal.hotness_score || 0
+  const tier = score >= 45 ? hotnessTier(score) : null
+
   return (
     <div className="deal-card card-shine group cursor-pointer" onClick={handleClick}>
       {/* IMAGE */}
@@ -53,11 +58,40 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* TYPE — only Flash and Clearance, no "Hot" */}
-        <div className="absolute top-2 right-2">
-          {deal.deal_type === 'flash'     && <span className="badge-flash">⚡ Flash</span>}
-          {deal.deal_type === 'clearance' && <span className="badge-clear">Clearance</span>}
-        </div>
+        {/* HOTNESS TIER (top right, takes precedence over deal type if hot) */}
+        {tier ? (
+          <div className="absolute top-2 right-2 text-xs font-black uppercase tracking-wider
+                          px-2 py-1 rounded-md shadow-md flex items-center gap-1"
+               style={{ background: tier.color, color: tier.textColor }}>
+            <span>{tier.emoji}</span>
+            <span>{tier.label}</span>
+          </div>
+        ) : (
+          <div className="absolute top-2 right-2">
+            {deal.deal_type === 'flash'     && <span className="badge-flash">⚡ Flash</span>}
+            {deal.deal_type === 'clearance' && <span className="badge-clear">Clearance</span>}
+          </div>
+        )}
+
+        {/* EDITOR'S CHOICE — gold star top-left, below discount */}
+        {deal.is_editors_choice && (
+          <div className="absolute top-10 left-2 bg-gradient-to-r from-yellow-500 to-amber-400
+                          text-black text-xs font-black px-2 py-1 rounded-md
+                          uppercase tracking-wider shadow-md flex items-center gap-1">
+            <span>⭐</span>
+            <span>Editor's Pick</span>
+          </div>
+        )}
+
+        {/* VERIFIED — checkmark when click_count >= 5 */}
+        {(deal.is_verified || (deal.click_count || 0) >= 5) && !deal.is_editors_choice && (
+          <div className="absolute top-10 left-2 bg-brand-green/90 text-white
+                          text-xs font-bold px-2 py-1 rounded-md
+                          flex items-center gap-1 shadow-md">
+            <span>✓</span>
+            <span>Verified</span>
+          </div>
+        )}
 
         {/* RETAILER */}
         {deal.retailer_name && (
@@ -108,6 +142,17 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
           {timeLeft && (
             <div className="text-xs text-brand-red timer-pulse font-medium">⏱ Ends in {timeLeft}</div>
+          )}
+
+          {/* HOTNESS BAR — visual indicator of score for hot+ tier */}
+          {tier && (
+            <div className="flex items-center gap-2 text-xs">
+              <div className="flex-1 h-1 bg-brand-dark-4 rounded-full overflow-hidden">
+                <div className="h-full transition-all duration-500"
+                     style={{ width: `${score}%`, background: tier.color }} />
+              </div>
+              <span className="text-brand-gray font-mono text-[10px]">{score}</span>
+            </div>
           )}
 
           <button disabled={clicking}
