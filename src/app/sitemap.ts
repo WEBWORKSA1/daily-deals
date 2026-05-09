@@ -1,22 +1,15 @@
+import type { MetadataRoute } from 'next'
 import { supabase } from '@/lib/db'
 import { CATEGORIES } from '@/lib/utils'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 3600 // re-generate every hour
 
 const BASE = 'https://daily.deals'
 
-type SitemapEntry = {
-  url: string
-  lastModified?: string | Date
-  changeFrequency?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never'
-  priority?: number
-}
-
-export default async function sitemap(): Promise<SitemapEntry[]> {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
-  const staticPages: SitemapEntry[] = [
+  const staticPages: MetadataRoute.Sitemap = [
     { url: `${BASE}/`,                    lastModified: now, changeFrequency: 'hourly',  priority: 1.0 },
     { url: `${BASE}/deals/today`,         lastModified: now, changeFrequency: 'hourly',  priority: 0.95 },
     { url: `${BASE}/deals/hot`,           lastModified: now, changeFrequency: 'hourly',  priority: 0.95 },
@@ -37,29 +30,26 @@ export default async function sitemap(): Promise<SitemapEntry[]> {
     { url: `${BASE}/contact`,             lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
   ]
 
-  // High-intent SEO landing pages from /[slug]/page.tsx
   const seoLandingSlugs = [
     'best-deals-today', 'amazon-deals-today', 'walmart-deals-today',
     'best-laptop-deals', 'best-phone-deals', 'best-tv-deals',
     'best-gaming-deals', 'cheap-gadgets-deals', 'black-friday-deals',
   ]
-  const seoLandingPages: SitemapEntry[] = seoLandingSlugs.map(slug => ({
+  const seoLandingPages: MetadataRoute.Sitemap = seoLandingSlugs.map(slug => ({
     url: `${BASE}/${slug}`,
     lastModified: now,
-    changeFrequency: 'daily',
+    changeFrequency: 'daily' as const,
     priority: 0.85,
   }))
 
-  // Category pages
-  const categoryPages: SitemapEntry[] = (CATEGORIES || []).map((c: any) => ({
+  const categoryPages: MetadataRoute.Sitemap = (CATEGORIES || []).map((c: any) => ({
     url: `${BASE}/category/${c.slug || c}`,
     lastModified: now,
-    changeFrequency: 'daily',
+    changeFrequency: 'daily' as const,
     priority: 0.7,
   }))
 
-  // Store pages — every active retailer
-  let storePages: SitemapEntry[] = []
+  let storePages: MetadataRoute.Sitemap = []
   try {
     const { data: retailers } = await supabase
       .from('retailers')
@@ -69,13 +59,12 @@ export default async function sitemap(): Promise<SitemapEntry[]> {
     storePages = (retailers || []).map((r: any) => ({
       url: `${BASE}/store/${r.slug}`,
       lastModified: now,
-      changeFrequency: 'daily',
+      changeFrequency: 'daily' as const,
       priority: 0.7,
     }))
   } catch {}
 
-  // Deal detail pages — every active deal (using created_at as freshness signal)
-  let dealPages: SitemapEntry[] = []
+  let dealPages: MetadataRoute.Sitemap = []
   try {
     const { data: deals } = await supabase
       .from('deals')
@@ -86,7 +75,7 @@ export default async function sitemap(): Promise<SitemapEntry[]> {
     dealPages = (deals || []).map((d: any) => ({
       url: `${BASE}/deal/${d.id}`,
       lastModified: d.created_at ? new Date(d.created_at) : now,
-      changeFrequency: 'daily',
+      changeFrequency: 'daily' as const,
       priority: 0.6,
     }))
   } catch {}
