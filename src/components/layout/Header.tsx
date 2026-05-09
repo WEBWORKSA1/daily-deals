@@ -3,13 +3,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useLocation } from '@/hooks/useLocation'
 import { CATEGORIES } from '@/lib/utils'
+import SearchBar from '@/components/ui/SearchBar'
 
 export default function Header() {
   const { location, loading, error, setManualLocation } = useLocation()
   const [showModal, setShowModal] = useState(false)
   const [input, setInput] = useState('')
   const [saving, setSaving] = useState(false)
-  const [searchQ, setSearchQ] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -44,18 +44,9 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* SEARCH BAR */}
+            {/* SEARCH BAR with autocomplete */}
             <div className="flex-1 max-w-2xl mx-4 hidden md:block">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQ}
-                  onChange={e => setSearchQ(e.target.value)}
-                  placeholder="Search deals, stores, brands..."
-                  className="input-dark pl-11 pr-4 h-10"
-                />
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-gray text-base">🔍</span>
-              </div>
+              <SearchBar />
             </div>
 
             {/* RIGHT SIDE */}
