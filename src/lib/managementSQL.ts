@@ -32,7 +32,6 @@ export async function runManagementSQL(sql: string): Promise<{ ok: boolean, data
   }
 }
 
-// Idempotent migration list — runs in order, skipping already-applied
 export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
   {
     id: '001_create_postal_codes',
@@ -205,7 +204,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
     id: '008_price_history_and_coupons',
     name: 'Add price history + coupon tracking',
     sql: `
-      -- Price history: track every price change on a deal over time
       CREATE TABLE IF NOT EXISTS public.deal_price_history (
         id SERIAL PRIMARY KEY,
         deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
@@ -217,13 +215,12 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_price_history_deal
         ON public.deal_price_history(deal_id, recorded_at DESC);
 
-      -- Coupon feedback: did the coupon work for the user?
       CREATE TABLE IF NOT EXISTS public.coupon_feedback (
         id SERIAL PRIMARY KEY,
         deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
         user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
         worked BOOLEAN NOT NULL,
-        ip_hash VARCHAR(64),                  -- For anonymous users; rate-limited dedup
+        ip_hash VARCHAR(64),
         created_at TIMESTAMP DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_coupon_feedback_deal
@@ -231,7 +228,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_coupon_feedback_user
         ON public.coupon_feedback(user_id);
 
-      -- Aggregate columns on deals for fast lookup
       ALTER TABLE public.deals
         ADD COLUMN IF NOT EXISTS coupon_works_count INTEGER DEFAULT 0,
         ADD COLUMN IF NOT EXISTS coupon_fails_count INTEGER DEFAULT 0,
@@ -245,6 +241,54 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       GRANT USAGE ON SEQUENCE public.deal_price_history_id_seq TO authenticated, anon;
       GRANT SELECT, INSERT ON public.coupon_feedback TO authenticated, anon;
       GRANT USAGE ON SEQUENCE public.coupon_feedback_id_seq TO authenticated, anon;
+    `,
+  },
+  {
+    id: '009_comments_and_flags',
+    name: 'Comments + flags for community moderation',
+    sql: `
+      -- Comments on deals
+      CREATE TABLE IF NOT EXISTS public.deal_comments (
+        id SERIAL PRIMARY KEY,
+        deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+        parent_id INTEGER REFERENCES public.deal_comments(id) ON DELETE CASCADE,
+        body TEXT NOT NULL,
+        is_hidden BOOLEAN DEFAULT FALSE,
+        flag_count INTEGER DEFAULT 0,
+        upvote_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_comments_deal ON public.deal_comments(deal_id);
+      CREATE INDEX IF NOT EXISTS idx_comments_user ON public.deal_comments(user_id);
+      CREATE INDEX IF NOT EXISTS idx_comments_parent ON public.deal_comments(parent_id);
+
+      -- Flags / reports
+      CREATE TABLE IF NOT EXISTS public.flags (
+        id SERIAL PRIMARY KEY,
+        flagged_by_user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
+        target_type VARCHAR(20) NOT NULL,        -- 'deal' | 'comment'
+        target_id INTEGER NOT NULL,
+        reason VARCHAR(50) NOT NULL,             -- 'spam' | 'expired' | 'wrong_price' | 'inappropriate' | 'other'
+        details TEXT,
+        is_resolved BOOLEAN DEFAULT FALSE,
+        resolved_by_user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
+        resolution_action VARCHAR(50),
+        created_at TIMESTAMP DEFAULT NOW(),
+        resolved_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_flags_target ON public.flags(target_type, target_id);
+      CREATE INDEX IF NOT EXISTS idx_flags_unresolved ON public.flags(is_resolved) WHERE is_resolved = FALSE;
+
+      ALTER TABLE public.deals
+        ADD COLUMN IF NOT EXISTS comment_count INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS flag_count INTEGER DEFAULT 0;
+
+      GRANT SELECT, INSERT, UPDATE, DELETE ON public.deal_comments TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.deal_comments_id_seq TO authenticated, anon;
+      GRANT SELECT, INSERT ON public.flags TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.flags_id_seq TO authenticated, anon;
     `,
   },
 ]
