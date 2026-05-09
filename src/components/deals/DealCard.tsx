@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Deal } from '@/types'
 import { formatPrice, getTimeRemaining } from '@/lib/utils'
 import { hotnessTier } from '@/lib/hotness'
@@ -9,6 +10,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   initialUserVote?: number | null
   initialIsSaved?: boolean
 }) {
+  const router = useRouter()
   const [timeLeft, setTimeLeft] = useState<string | null>(null)
   const [clicking, setClicking] = useState(false)
   const [userVote, setUserVote] = useState<number | null>(initialUserVote ?? null)
@@ -25,7 +27,14 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
     return () => clearInterval(id)
   }, [deal.expires_at])
 
-  async function handleClick() {
+  // Card click → goes to deal detail page
+  function handleCardClick() {
+    router.push(`/deal/${deal.id}`)
+  }
+
+  // Get Deal button → tracks click + opens affiliate URL
+  async function handleGetDeal(e: React.MouseEvent) {
+    e.stopPropagation()
     if (clicking) return
     setClicking(true)
     try {
@@ -41,7 +50,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
   async function handleVote(v: 1 | -1, e: React.MouseEvent) {
     e.stopPropagation()
-    const newVote = userVote === v ? 0 : v // tap same = remove
+    const newVote = userVote === v ? 0 : v
     try {
       const res = await fetch('/api/votes', {
         method: 'POST',
@@ -86,8 +95,8 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   const netVotes = upvotes - downvotes
 
   return (
-    <div className="deal-card card-shine group cursor-pointer relative" onClick={handleClick}>
-      {/* SAVE button — top right corner over card */}
+    <div className="deal-card card-shine group cursor-pointer relative" onClick={handleCardClick}>
+      {/* SAVE button */}
       <button onClick={handleSave}
         className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center
                     backdrop-blur-md transition-all ${
@@ -96,7 +105,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
                         : 'bg-black/60 text-white/80 hover:bg-brand-red/80 hover:text-white'
                     }`}
         title={isSaved ? 'Saved' : 'Save deal'}>
-        {isSaved ? '🔖' : '🔖'}
+        🔖
       </button>
 
       {/* IMAGE */}
@@ -133,8 +142,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
           <div className="absolute top-10 left-2 bg-gradient-to-r from-yellow-500 to-amber-400
                           text-black text-xs font-black px-2 py-1 rounded-md
                           uppercase tracking-wider shadow-md flex items-center gap-1">
-            <span>⭐</span>
-            <span>Editor's Pick</span>
+            <span>⭐</span><span>Editor's Pick</span>
           </div>
         )}
 
@@ -142,8 +150,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
           <div className="absolute top-10 left-2 bg-brand-green/90 text-white
                           text-xs font-bold px-2 py-1 rounded-md
                           flex items-center gap-1 shadow-md">
-            <span>✓</span>
-            <span>Verified</span>
+            <span>✓</span><span>Verified</span>
           </div>
         )}
 
@@ -196,7 +203,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             <div className="text-xs text-brand-red timer-pulse font-medium">⏱ Ends in {timeLeft}</div>
           )}
 
-          {/* VOTE BAR + HOTNESS BAR */}
           <div className="flex items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-1">
               <button onClick={e => handleVote(1, e)}
@@ -229,7 +235,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             </div>
           )}
 
-          <button disabled={clicking}
+          <button onClick={handleGetDeal} disabled={clicking}
             className="w-full bg-brand-red/10 hover:bg-brand-red text-brand-red hover:text-white
                        border border-brand-red/30 hover:border-brand-red
                        text-xs font-bold uppercase tracking-wider py-2.5 rounded-lg
