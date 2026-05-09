@@ -145,4 +145,64 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       GRANT USAGE ON SEQUENCE public.deal_alerts_id_seq TO authenticated, anon;
     `,
   },
+  {
+    id: '007_user_accounts_and_saves',
+    name: 'Create user accounts + saved deals + votes',
+    sql: `
+      -- Lightweight user table (Supabase Auth integration ready, but works standalone)
+      CREATE TABLE IF NOT EXISTS public.users (
+        id SERIAL PRIMARY KEY,
+        auth_id UUID UNIQUE,                 -- Optional: links to Supabase auth.users
+        email VARCHAR(255) UNIQUE NOT NULL,
+        username VARCHAR(50) UNIQUE,
+        display_name VARCHAR(100),
+        avatar_url TEXT,
+        country VARCHAR(2) DEFAULT 'US',
+        postal_code VARCHAR(10),
+        karma_score INTEGER DEFAULT 0,
+        is_admin BOOLEAN DEFAULT FALSE,
+        is_moderator BOOLEAN DEFAULT FALSE,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        last_seen_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+      CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
+
+      -- Saved deals (wishlist / favorites)
+      CREATE TABLE IF NOT EXISTS public.user_saved_deals (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+        deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, deal_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_saves_user ON public.user_saved_deals(user_id);
+      CREATE INDEX IF NOT EXISTS idx_saves_deal ON public.user_saved_deals(deal_id);
+
+      -- Votes (upvote / downvote)
+      CREATE TABLE IF NOT EXISTS public.user_votes (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+        deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
+        vote SMALLINT NOT NULL CHECK (vote IN (-1, 1)),
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, deal_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_votes_deal ON public.user_votes(deal_id);
+      CREATE INDEX IF NOT EXISTS idx_votes_user ON public.user_votes(user_id);
+
+      -- Aggregated vote columns on deals
+      ALTER TABLE public.deals
+        ADD COLUMN IF NOT EXISTS upvote_count INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS downvote_count INTEGER DEFAULT 0;
+
+      GRANT SELECT, INSERT, UPDATE ON public.users TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.users_id_seq TO authenticated, anon;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_saved_deals TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.user_saved_deals_id_seq TO authenticated, anon;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_votes TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.user_votes_id_seq TO authenticated, anon;
+    `,
+  },
 ]
