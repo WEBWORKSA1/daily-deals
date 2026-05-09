@@ -53,13 +53,16 @@ PRIVACY:
 WEBSITE: https://daily.deals
 `)
 
-    const blob = await zip.generateAsync({ type: 'nodebuffer' })
+    // Generate as Uint8Array (web-standard, accepted by Response/NextResponse).
+    // Avoid `nodebuffer` because TS's strict BodyInit type rejects Node's Buffer.
+    const bytes = await zip.generateAsync({ type: 'uint8array' })
 
-    return new NextResponse(blob, {
+    return new NextResponse(bytes, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename="daily-deals-extension.zip"',
         'Cache-Control': 'public, max-age=300',
+        'Content-Length': String(bytes.byteLength),
       },
     })
   } catch (e: any) {
