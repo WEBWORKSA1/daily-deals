@@ -4,11 +4,14 @@
 //   - <meta name="twitter:image">
 //   - Pinterest pin generation
 //   - Reddit/Facebook share previews
+//
+// Runs on Node runtime (not Edge) because @supabase/supabase-js
+// has Node-specific code paths that fail on Edge during build.
 
 import { ImageResponse } from 'next/og'
 import { supabase } from '@/lib/db'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -17,22 +20,36 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     return new Response('Invalid deal id', { status: 400 })
   }
 
-  const { data: deal } = await supabase
-    .from('deals')
-    .select('title, deal_price, original_price, discount_percent, image_url, country, retailers(name)')
-    .eq('id', dealId)
-    .single()
-
-  if (!deal) {
-    return new Response('Deal not found', { status: 404 })
+  let deal: any = null
+  try {
+    const { data } = await supabase
+      .from('deals')
+      .select('title, deal_price, original_price, discount_percent, image_url, country, retailers(name)')
+      .eq('id', dealId)
+      .single()
+    deal = data
+  } catch {
+    deal = null
   }
 
-  const d: any = deal
-  const currency = d.country === 'CA' ? 'CAD' : 'USD'
+  if (!deal) {
+    // Render a generic Daily.Deals card so the link doesn't 404 on Pinterest/FB
+    deal = {
+      title: 'Daily.Deals — Every Day',
+      deal_price: 0,
+      original_price: null,
+      discount_percent: null,
+      image_url: null,
+      country: 'US',
+      retailers: { name: 'Daily.Deals' },
+    }
+  }
+
+  const d = deal
   const symbol = '$'
-  const dealPrice = `${symbol}${Number(d.deal_price).toFixed(0)}`
+  const dealPrice = d.deal_price ? `${symbol}${Number(d.deal_price).toFixed(0)}` : ''
   const origPrice = d.original_price ? `${symbol}${Number(d.original_price).toFixed(0)}` : null
-  const discount = d.discount_percent || (d.original_price
+  const discount = d.discount_percent || (d.original_price && d.deal_price
     ? Math.round(((d.original_price - d.deal_price) / d.original_price) * 100)
     : 0)
   const retailerName = d.retailers?.name || 'Daily.Deals'
@@ -50,7 +67,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         position: 'relative',
         fontFamily: 'sans-serif',
       }}>
-        {/* Top bar with brand */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -75,16 +91,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {d.country === 'CA' ? (
-              <span style={{ fontSize: 24 }}>🇨🇦</span>
-            ) : (
-              <span style={{ fontSize: 24 }}>🇺🇸</span>
-            )}
+            <span style={{ fontSize: 24 }}>{d.country === 'CA' ? '🇨🇦' : '🇺🇸'}</span>
             <span style={{ fontSize: 16, color: '#aaa' }}>{retailerName}</span>
           </div>
         </div>
 
-        {/* Main content */}
         <div style={{
           display: 'flex',
           flex: 1,
@@ -92,7 +103,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           alignItems: 'center',
           gap: 48,
         }}>
-          {/* Image */}
           {d.image_url ? (
             <div style={{
               display: 'flex',
@@ -118,7 +128,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             }}>🛍️</div>
           )}
 
-          {/* Text */}
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 16 }}>
             {discount > 0 && (
               <div style={{
@@ -146,30 +155,31 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
               {titleClipped}{(d.title || '').length > 80 ? '…' : ''}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 8 }}>
-              <span style={{
-                fontSize: 72,
-                fontWeight: 900,
-                color: '#dc2626',
-                letterSpacing: -2,
-                lineHeight: 1,
-              }}>
-                {dealPrice}
-              </span>
-              {origPrice && (
+            {dealPrice && (
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 8 }}>
                 <span style={{
-                  fontSize: 32,
-                  color: '#666',
-                  textDecoration: 'line-through',
+                  fontSize: 72,
+                  fontWeight: 900,
+                  color: '#dc2626',
+                  letterSpacing: -2,
+                  lineHeight: 1,
                 }}>
-                  {origPrice}
+                  {dealPrice}
                 </span>
-              )}
-            </div>
+                {origPrice && (
+                  <span style={{
+                    fontSize: 32,
+                    color: '#666',
+                    textDecoration: 'line-through',
+                  }}>
+                    {origPrice}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Bottom strip */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
