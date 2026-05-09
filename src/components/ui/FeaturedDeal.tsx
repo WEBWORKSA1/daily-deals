@@ -31,12 +31,19 @@ export default function FeaturedDeal({ deal }: { deal: Deal }) {
     <div className="bg-white border border-ink overflow-hidden cursor-pointer group" onClick={handleClick}>
       <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-0">
 
-        {/* IMAGE */}
+        {/* IMAGE — with high-contrast placeholder when broken */}
         <div className="relative bg-paper-2 h-64 md:h-[420px] overflow-hidden border-b md:border-b-0 md:border-r border-rule">
           {showPlaceholder ? (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-              <span className="text-[11px] tracking-[0.25em] text-ink-muted">DAILY DEAL</span>
-              <span className="text-[10px] tracking-wider text-ink-muted/70">{deal.retailer_name || ''}</span>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 relative"
+                 style={{
+                   backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 14px, rgba(10,10,10,0.03) 14px, rgba(10,10,10,0.03) 15px)',
+                 }}>
+              <div className="font-serif font-medium text-ink text-3xl tracking-tight">
+                Daily<span className="text-accent">.</span>Deals
+              </div>
+              <div className="text-ink-muted text-xs tracking-[0.2em]">
+                {deal.retailer_name ? deal.retailer_name.toUpperCase() : 'IMAGE UNAVAILABLE'}
+              </div>
             </div>
           ) : (
             <img

@@ -13,7 +13,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState<string | null>(null)
   const [clicking, setClicking] = useState(false)
-  const [imgFailed, setImgFailed] = useState(false)  // ← NEW: track broken images
+  const [imgFailed, setImgFailed] = useState(false)
   const [userVote, setUserVote] = useState<number | null>(initialUserVote ?? null)
   const [upvotes, setUpvotes] = useState((deal as any).upvote_count || 0)
   const [downvotes, setDownvotes] = useState((deal as any).downvote_count || 0)
@@ -36,9 +36,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
     e.stopPropagation()
     if (clicking) return
     setClicking(true)
-
     let urlToOpen = deal.affiliate_url
-
     try {
       const res = await fetch('/api/cashback', {
         method: 'POST',
@@ -51,7 +49,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         if (json.affiliate_url) urlToOpen = json.affiliate_url
       }
     } catch {}
-
     try {
       await fetch('/api/clicks', {
         method: 'POST',
@@ -59,7 +56,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         body: JSON.stringify({ deal_id: deal.id })
       })
     } catch {}
-
     window.open(urlToOpen, '_blank', 'noopener,noreferrer')
     setClicking(false)
   }
@@ -105,17 +101,13 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
     ? Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100)
     : 0)
   const savings = deal.original_price ? deal.original_price - deal.deal_price : null
-
   const score = deal.hotness_score || 0
   const tier = score >= 45 ? hotnessTier(score) : null
   const netVotes = upvotes - downvotes
-
-  // Show placeholder if URL is missing OR if image failed to load
   const showPlaceholder = !deal.image_url || imgFailed
 
   return (
     <div className="deal-card group cursor-pointer relative" onClick={handleCardClick}>
-      {/* SAVE button */}
       <button onClick={handleSave}
         className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
           isSaved
@@ -126,12 +118,19 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         {isSaved ? '★' : '☆'}
       </button>
 
-      {/* IMAGE */}
+      {/* IMAGE — high-contrast placeholder when missing/broken */}
       <div className="relative bg-paper-2 aspect-square overflow-hidden flex-shrink-0 border-b border-rule">
         {showPlaceholder ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-ink-muted">
-            <span className="text-[11px] tracking-[0.2em]">DAILY DEAL</span>
-            <span className="text-[10px] tracking-wider text-ink-muted/70">{deal.retailer_name || ''}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 relative"
+               style={{
+                 backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(10,10,10,0.03) 10px, rgba(10,10,10,0.03) 11px)',
+               }}>
+            <div className="font-serif font-medium text-ink text-sm tracking-tight">
+              Daily<span className="text-accent">.</span>Deals
+            </div>
+            <div className="text-ink-muted text-[9px] tracking-[0.2em]">
+              {deal.retailer_name ? deal.retailer_name.toUpperCase() : 'NO IMAGE'}
+            </div>
           </div>
         ) : (
           <img
