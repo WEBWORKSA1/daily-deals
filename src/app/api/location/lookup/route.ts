@@ -17,6 +17,11 @@ interface PostalResult {
   message?: string
 }
 
+// Fire-and-forget helper that swallows errors.
+async function silently<T>(p: PromiseLike<T>): Promise<void> {
+  try { await p } catch {}
+}
+
 // Normalize input: uppercase, strip whitespace, take FSA for Canada
 function normalizeCode(input: string): { clean: string, country: 'US' | 'CA' | null } {
   const clean = input.toUpperCase().replace(/\s/g, '')
@@ -76,8 +81,8 @@ async function tryZippopotam(code: string, country: 'US' | 'CA'): Promise<Postal
       source: 'fallback',
     }
 
-    // Auto-cache to Supabase for next time (fire and forget)
-    supabase.from('postal_code_locations').upsert({
+    // Auto-cache to Supabase for next time (fire-and-forget, errors swallowed)
+    silently(supabase.from('postal_code_locations').upsert({
       code,
       country,
       city: result.city,
@@ -86,7 +91,7 @@ async function tryZippopotam(code: string, country: 'US' | 'CA'): Promise<Postal
       latitude: lat,
       longitude: lng,
       source: 'fallback',
-    }, { onConflict: 'code' }).then(() => {})
+    }, { onConflict: 'code' }))
 
     return result
   } catch { return null }
@@ -113,8 +118,8 @@ export async function GET(request: Request) {
   // Layer 2: Hardcoded library (works even if Supabase migration hasn't run yet)
   const hardcoded = lookupHardcoded(clean)
   if (hardcoded) {
-    // Try to write to cache for next time
-    supabase.from('postal_code_locations').upsert({
+    // Try to write to cache for next time (fire-and-forget)
+    silently(supabase.from('postal_code_locations').upsert({
       code: hardcoded.code,
       country: hardcoded.country,
       city: hardcoded.city,
@@ -123,7 +128,7 @@ export async function GET(request: Request) {
       latitude: hardcoded.latitude,
       longitude: hardcoded.longitude,
       source: 'seeded',
-    }, { onConflict: 'code' }).then(() => {})
+    }, { onConflict: 'code' }))
 
     return NextResponse.json({
       found: true,
