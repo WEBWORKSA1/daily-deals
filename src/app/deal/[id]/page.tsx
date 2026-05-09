@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer'
 import DealCard from '@/components/deals/DealCard'
 import PriceChart from '@/components/ui/PriceChart'
 import CouponFeedback from '@/components/ui/CouponFeedback'
+import Comments from '@/components/ui/Comments'
 import { supabase } from '@/lib/db'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
@@ -85,7 +86,6 @@ export default async function DealPage({ params }: Props) {
     <>
       <Header />
       <main>
-        {/* BREADCRUMB */}
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
           <div className="text-xs text-brand-gray flex items-center gap-2">
             <Link href="/" className="hover:text-white">Home</Link>
@@ -104,12 +104,10 @@ export default async function DealPage({ params }: Props) {
 
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
 
-          {/* LEFT — IMAGE + DETAILS */}
           <div>
             <div className="bg-brand-dark-3 border border-white/5 rounded-2xl overflow-hidden mb-6">
               {deal.image_url ? (
-                <img src={deal.image_url} alt={deal.title}
-                  className="w-full h-96 object-cover" />
+                <img src={deal.image_url} alt={deal.title} className="w-full h-96 object-cover" />
               ) : (
                 <div className="w-full h-96 flex items-center justify-center text-8xl opacity-20">🛍️</div>
               )}
@@ -154,7 +152,6 @@ export default async function DealPage({ params }: Props) {
               </p>
             )}
 
-            {/* PRICE BLOCK */}
             <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6 mb-6">
               <div className="flex flex-wrap items-baseline gap-3 mb-3">
                 <span className="font-heading text-5xl font-900 text-brand-red leading-none">
@@ -177,7 +174,6 @@ export default async function DealPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Price quality stars */}
               <div className="flex items-center gap-3 mb-4 text-sm">
                 <span className="text-brand-gray text-xs">Price quality:</span>
                 <div className="flex items-center gap-0.5">
@@ -201,7 +197,11 @@ export default async function DealPage({ params }: Props) {
               </p>
             </div>
 
-            {/* RELATED DEALS */}
+            {/* COMMENTS */}
+            <div className="mb-6">
+              <Comments dealId={deal.id} />
+            </div>
+
             {related.length > 0 && (
               <section>
                 <h2 className="font-heading text-2xl font-900 text-white uppercase mb-4">
@@ -214,7 +214,6 @@ export default async function DealPage({ params }: Props) {
             )}
           </div>
 
-          {/* RIGHT — STATS + COUPON + RETAILER */}
           <aside className="space-y-4">
             <PriceChart dealId={deal.id} />
             {deal.coupon_code && <CouponFeedback dealId={deal.id} couponCode={deal.coupon_code} />}
@@ -232,7 +231,6 @@ export default async function DealPage({ params }: Props) {
               </div>
             )}
 
-            {/* DEAL META */}
             <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6">
               <h3 className="text-white font-bold mb-3">📊 Deal Stats</h3>
               <div className="space-y-2 text-xs">
