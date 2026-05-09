@@ -12,7 +12,6 @@ export default function Header() {
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
 
-  // Load session
   useEffect(() => {
     fetch('/api/auth').then(r => r.json()).then(j => setUser(j.user)).catch(() => {})
   }, [])
@@ -27,17 +26,14 @@ export default function Header() {
 
   return (
     <>
-      {/* TOP BAR */}
       <div className="bg-brand-red text-white text-xs font-bold text-center py-1.5 tracking-widest uppercase">
         🔥 New deals added every 24 hours — US & Canada
       </div>
 
-      {/* MAIN HEADER */}
       <header className="sticky top-0 z-50 bg-brand-dark-2/95 backdrop-blur-md border-b border-white/8">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 h-16">
 
-            {/* LOGO */}
             <Link href="/" className="flex items-center gap-2 flex-shrink-0 group">
               <div className="relative">
                 <span className="text-brand-red text-2xl fire-icon">🔥</span>
@@ -50,15 +46,11 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* SEARCH BAR with autocomplete */}
             <div className="flex-1 max-w-2xl mx-4 hidden md:block">
               <SearchBar />
             </div>
 
-            {/* RIGHT SIDE */}
             <div className="flex items-center gap-2 ml-auto">
-
-              {/* LOCATION */}
               <button
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-1.5 bg-brand-dark-4 hover:bg-brand-dark-5
@@ -74,12 +66,10 @@ export default function Header() {
                 )}
               </button>
 
-              {/* MOBILE SEARCH */}
               <button className="md:hidden bg-brand-dark-4 border border-white/10 p-2 rounded-lg text-brand-gray-2">
                 🔍
               </button>
 
-              {/* ACCOUNT */}
               {user ? (
                 <Link href="/account"
                   className="hidden sm:flex items-center gap-1.5 bg-brand-dark-4 hover:bg-brand-dark-5
@@ -95,7 +85,6 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* CTA */}
               <Link href="/deals/hot" className="btn-primary hidden sm:inline-flex">
                 🔥 Hot Deals
               </Link>
@@ -103,7 +92,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* NAV */}
         <div className="border-t border-white/5 bg-brand-dark-2">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
@@ -112,6 +100,13 @@ export default function Header() {
                            bg-brand-red/10 border border-brand-red/20 px-3 py-1.5 rounded-md
                            hover:bg-brand-red/20 transition-colors">
                 🔥 Hot Deals
+              </Link>
+              <Link href="/for-you"
+                className="flex-shrink-0 text-xs font-bold uppercase tracking-wider
+                           bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 text-fuchsia-300
+                           border border-fuchsia-500/30 px-3 py-1.5 rounded-md
+                           hover:from-purple-500/30 hover:to-fuchsia-500/30 transition-colors">
+                ✨ For You
               </Link>
               <Link href="/deals/today"
                 className="flex-shrink-0 text-xs font-bold text-white uppercase tracking-wider
@@ -142,7 +137,6 @@ export default function Header() {
         </div>
       </header>
 
-      {/* LOCATION MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
              onClick={() => setShowModal(false)}>
