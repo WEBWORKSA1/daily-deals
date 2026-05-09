@@ -51,6 +51,12 @@ export interface Deal {
   store_city?: string | null
   store_postal?: string | null
   distance_km?: number
+  hotness_score?: number
+  hotness_updated_at?: string
+  is_editors_choice?: boolean
+  is_verified?: boolean
+  view_count?: number
+  save_count?: number
 }
 
 export interface Location {
