@@ -6,25 +6,30 @@ import { recordCashbackClick } from '@/lib/cashback'
 
 export const dynamic = 'force-dynamic'
 
+// Fire-and-forget helper that swallows errors and works with supabase's PromiseLike.
+async function silently<T>(p: PromiseLike<T>): Promise<void> {
+  try { await p } catch {}
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}))
+    const body = await req.json().catch(() => ({} as any))
     const dealId = parseInt(body.deal_id, 10)
     if (!dealId || isNaN(dealId)) {
       return NextResponse.json({ error: 'deal_id required' }, { status: 400 })
     }
 
-    // Log the click for analytics
-    await supabase.from('deal_clicks').insert({
+    // Log the click for analytics — fire-and-forget
+    silently(supabase.from('deal_clicks').insert({
       deal_id: dealId,
       user_country: body.user_country,
       user_city: body.user_city,
       user_postal: body.user_postal,
       referrer: req.headers.get('referer'),
-    }).then(() => {}, () => {}) // fire-and-forget
+    }))
 
-    // Bump click_count via RPC
-    supabase.rpc('increment_click_count', { deal_id_input: dealId }).then(() => {}, () => {})
+    // Bump click_count via RPC — fire-and-forget
+    silently(supabase.rpc('increment_click_count', { deal_id_input: dealId }))
 
     // Fetch the deal AND retailer info so we can inject the right affiliate tag
     const { data: deal } = await supabase
@@ -46,7 +51,11 @@ export async function POST(req: NextRequest) {
     let trackedUrl = buildAffiliateLink(dealForLink, r.affiliate_net || 'direct')
 
     // If user is signed in, also create a cashback event so we can credit them later
-    const user = await getUserFromRequest(req).catch(() => null)
+    let user: any = null
+    try {
+      user = await getUserFromRequest(req)
+    } catch {}
+
     if (user && (deal as any).retailer_id && r.cashback_rate > 0) {
       try {
         const { click_id } = await recordCashbackClick({
@@ -55,11 +64,9 @@ export async function POST(req: NextRequest) {
           retailerId: (deal as any).retailer_id,
           cashbackRate: Number(r.cashback_rate),
         })
-        // Append our click_id as a sub-id parameter so the affiliate network
-        // can return it in conversion postbacks
+        // Append click_id as a sub-id so the affiliate network can postback
         try {
           const u = new URL(trackedUrl)
-          // Different networks use different subId param names — set the common ones
           u.searchParams.set('subid', click_id)
           u.searchParams.set('sid', click_id)
           u.searchParams.set('utm_content', click_id)
