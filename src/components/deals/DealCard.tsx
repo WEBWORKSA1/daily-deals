@@ -32,11 +32,29 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
     router.push(`/deal/${deal.id}`)
   }
 
-  // Get Deal button → tracks click + opens affiliate URL
+  // Get Deal button → tracks click, requests cashback link if signed in, opens
   async function handleGetDeal(e: React.MouseEvent) {
     e.stopPropagation()
     if (clicking) return
     setClicking(true)
+
+    let urlToOpen = deal.affiliate_url
+
+    // Try to get a cashback-tagged URL (silently falls back to plain URL if not signed in)
+    try {
+      const res = await fetch('/api/cashback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ deal_id: deal.id }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        if (json.affiliate_url) urlToOpen = json.affiliate_url
+      }
+    } catch {}
+
+    // Always log the click for analytics
     try {
       await fetch('/api/clicks', {
         method: 'POST',
@@ -44,7 +62,8 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         body: JSON.stringify({ deal_id: deal.id })
       })
     } catch {}
-    window.open(deal.affiliate_url, '_blank', 'noopener,noreferrer')
+
+    window.open(urlToOpen, '_blank', 'noopener,noreferrer')
     setClicking(false)
   }
 
