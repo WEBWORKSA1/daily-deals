@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Script from 'next/script'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -12,6 +13,7 @@ import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
 import { hotnessTier } from '@/lib/hotness'
 import { priceQualityRating } from '@/lib/priceHistory'
+import { buildProductSchema, buildBreadcrumbSchema } from '@/lib/schema'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -59,9 +61,18 @@ async function getRelatedDeals(deal: Deal): Promise<Deal[]> {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const deal = await getDeal(parseInt(params.id))
   if (!deal) return { title: 'Deal not found — Daily.Deals' }
+  const url = `https://daily.deals/deal/${deal.id}`
   return {
     title: `${deal.title} — ${formatPrice(deal.deal_price, deal.country)} | Daily.Deals`,
-    description: deal.description || `${deal.title} on sale at ${deal.retailer_name}.`,
+    description: deal.description || `${deal.title} on sale at ${deal.retailer_name}. Save ${deal.discount_percent || ''}% today.`,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'website',
+      url,
+      title: deal.title,
+      description: deal.description || `On sale at ${deal.retailer_name}.`,
+      images: deal.image_url ? [{ url: deal.image_url }] : undefined,
+    },
   }
 }
 
@@ -82,8 +93,19 @@ export default async function DealPage({ params }: Props) {
     : 0)
   const savings = deal.original_price ? deal.original_price - deal.deal_price : null
 
+  const productSchema = buildProductSchema(deal as any)
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', url: 'https://daily.deals' },
+    ...(deal.retailer_slug ? [{ name: deal.retailer_name || 'Store', url: `https://daily.deals/store/${deal.retailer_slug}` }] : []),
+    { name: deal.title, url: `https://daily.deals/deal/${deal.id}` },
+  ])
+
   return (
     <>
+      <Script id={`product-schema-${id}`} type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <Script id={`breadcrumb-schema-${id}`} type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <Header />
       <main>
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
