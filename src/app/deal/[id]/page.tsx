@@ -8,6 +8,7 @@ import DealCard from '@/components/deals/DealCard'
 import PriceChart from '@/components/ui/PriceChart'
 import CouponFeedback from '@/components/ui/CouponFeedback'
 import Comments from '@/components/ui/Comments'
+import ShareBar from '@/components/deals/ShareBar'
 import { supabase } from '@/lib/db'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
@@ -62,16 +63,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const deal = await getDeal(parseInt(params.id))
   if (!deal) return { title: 'Deal not found — Daily.Deals' }
   const url = `https://daily.deals/deal/${deal.id}`
+  const ogImageUrl = `https://daily.deals/deal/${deal.id}/og-image`
+  const discount = deal.discount_percent || (deal.original_price
+    ? Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100)
+    : 0)
   return {
     title: `${deal.title} — ${formatPrice(deal.deal_price, deal.country)} | Daily.Deals`,
-    description: deal.description || `${deal.title} on sale at ${deal.retailer_name}. Save ${deal.discount_percent || ''}% today.`,
+    description: deal.description || `${deal.title} on sale at ${deal.retailer_name}. Save ${discount}% today.`,
     alternates: { canonical: url },
     openGraph: {
       type: 'website',
       url,
-      title: deal.title,
-      description: deal.description || `On sale at ${deal.retailer_name}.`,
-      images: deal.image_url ? [{ url: deal.image_url }] : undefined,
+      title: `${deal.title} — ${discount}% OFF`,
+      description: deal.description || `${deal.title} on sale at ${deal.retailer_name}.`,
+      images: [{
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: deal.title,
+      }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${deal.title} — ${discount}% OFF`,
+      description: deal.description || `${deal.title} on sale at ${deal.retailer_name}.`,
+      images: [ogImageUrl],
     },
   }
 }
@@ -219,8 +235,12 @@ export default async function DealPage({ params }: Props) {
               </p>
             </div>
 
+            {/* SHARE BAR — Pinterest, Facebook, Twitter, Reddit, copy link */}
+            <ShareBar dealId={deal.id} title={deal.title}
+              ogImageUrl={`https://daily.deals/deal/${deal.id}/og-image`} />
+
             {/* COMMENTS */}
-            <div className="mb-6">
+            <div className="mb-6 mt-6">
               <Comments dealId={deal.id} />
             </div>
 
