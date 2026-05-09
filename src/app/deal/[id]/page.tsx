@@ -9,6 +9,7 @@ import PriceChart from '@/components/ui/PriceChart'
 import CouponFeedback from '@/components/ui/CouponFeedback'
 import Comments from '@/components/ui/Comments'
 import ShareBar from '@/components/deals/ShareBar'
+import GetDealButton from '@/components/deals/GetDealButton'
 import { supabase } from '@/lib/db'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
@@ -76,12 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       title: `${deal.title} — ${discount}% OFF`,
       description: deal.description || `${deal.title} on sale at ${deal.retailer_name}.`,
-      images: [{
-        url: ogImageUrl,
-        width: 1200,
-        height: 630,
-        alt: deal.title,
-      }],
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: deal.title }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -225,14 +221,11 @@ export default async function DealPage({ params }: Props) {
                 </span>
               </div>
 
-              <a href={deal.affiliate_url} target="_blank" rel="noopener noreferrer"
-                 className="block w-full bg-brand-red hover:bg-red-600 text-white text-center
-                            font-bold uppercase tracking-wider py-4 rounded-lg shadow-glow transition-all">
-                Get This Deal at {deal.retailer_name} →
-              </a>
-              <p className="text-brand-gray text-[10px] text-center mt-2">
-                Affiliate link · We may earn commission at no extra cost to you
-              </p>
+              <GetDealButton
+                dealId={deal.id}
+                fallbackUrl={deal.affiliate_url}
+                retailerName={deal.retailer_name || 'Retailer'}
+              />
             </div>
 
             {/* SHARE BAR — Pinterest, Facebook, Twitter, Reddit, copy link */}
