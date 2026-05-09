@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { Deal, Retailer } from '@/types'
 import { supabase } from '@/lib/db'
+import { ensureBootstrapped } from '@/lib/autoBootstrap'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import HeroSection from '@/components/ui/HeroSection'
@@ -96,6 +97,10 @@ async function getTotalDeals(): Promise<number> {
 }
 
 export default async function HomePage() {
+  // Auto-run migrations + seeding on first cold start. Subsequent calls are no-ops.
+  // Fire and forget so it doesn't block the page render — bootstrap finishes in the background.
+  ensureBootstrapped().catch(() => {})
+
   const [featured, flash, clearance, usDeals, caDeals, retailers, totalDeals] = await Promise.all([
     getFeaturedDeals(), getFlashDeals(), getClearanceDeals(), getUSDeals(), getCADeals(), getRetailers(), getTotalDeals()
   ])
