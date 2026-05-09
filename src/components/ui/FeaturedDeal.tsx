@@ -5,11 +5,13 @@ import { formatPrice } from '@/lib/utils'
 
 export default function FeaturedDeal({ deal }: { deal: Deal }) {
   const [clicking, setClicking] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
 
   const discount = deal.discount_percent || (deal.original_price
     ? Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100)
     : 0)
   const savings = deal.original_price ? deal.original_price - deal.deal_price : null
+  const showPlaceholder = !deal.image_url || imgFailed
 
   async function handleClick() {
     if (clicking) return
@@ -26,83 +28,84 @@ export default function FeaturedDeal({ deal }: { deal: Deal }) {
   }
 
   return (
-    <div className="relative rounded-2xl overflow-hidden bg-brand-dark-3 border border-white/10
-                    hover:border-brand-red/40 transition-all duration-300 group cursor-pointer"
-         onClick={handleClick}>
-
-      <div className="relative grid grid-cols-1 md:grid-cols-2 gap-0">
+    <div className="bg-white border border-ink overflow-hidden cursor-pointer group" onClick={handleClick}>
+      <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-0">
 
         {/* IMAGE */}
-        <div className="relative bg-brand-dark-4 h-64 md:h-80 overflow-hidden">
-          {deal.image_url ? (
-            <img src={deal.image_url} alt={deal.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <div className="relative bg-paper-2 h-64 md:h-[420px] overflow-hidden border-b md:border-b-0 md:border-r border-rule">
+          {showPlaceholder ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+              <span className="text-[11px] tracking-[0.25em] text-ink-muted">DAILY DEAL</span>
+              <span className="text-[10px] tracking-wider text-ink-muted/70">{deal.retailer_name || ''}</span>
+            </div>
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-8xl opacity-10">🛍️</div>
+            <img
+              src={deal.image_url!}
+              alt={deal.title}
+              onError={() => setImgFailed(true)}
+              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+            />
           )}
-          <div className="absolute top-4 left-4">
-            <div className="bg-brand-red text-white text-2xl font-black px-4 py-2 rounded-xl shadow-glow">
+
+          {discount > 0 && (
+            <div className="absolute top-4 left-4 badge-discount text-base">
               -{discount}%
             </div>
-          </div>
-          {deal.deal_type === 'flash' && (
-            <div className="absolute top-4 right-4">
-              <span className="badge-flash">⚡ Flash</span>
-            </div>
           )}
-          {deal.retailer_name && (
-            <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm
-                            text-white text-sm font-bold px-3 py-1.5 rounded-lg">
-              {deal.retailer_name} {deal.country === 'CA' ? '🇨🇦' : '🇺🇸'}
+          {deal.deal_type === 'flash' && (
+            <div className="absolute top-4 right-4 text-[11px] tracking-wider px-2 py-1 bg-accent text-white">
+              DAILY FLASH
             </div>
           )}
         </div>
 
         {/* CONTENT */}
-        <div className="p-8 flex flex-col justify-center">
-          <h2 className="font-heading text-3xl md:text-4xl font-900 text-white leading-tight mb-4 uppercase
-                         group-hover:text-brand-red transition-colors">
+        <div className="p-7 lg:p-10 flex flex-col justify-center">
+          <div className="badge-eyebrow mb-3">
+            {deal.retailer_name?.toUpperCase() || 'RETAILER'} · {deal.country === 'CA' ? 'CANADA' : 'UNITED STATES'}
+          </div>
+
+          <h2 className="font-serif text-3xl md:text-4xl font-medium text-ink leading-[1.1] mb-4">
             {deal.title}
           </h2>
 
           {deal.description && (
-            <p className="text-brand-gray text-sm leading-relaxed mb-6 line-clamp-2">
+            <p className="text-ink-2 text-sm leading-relaxed mb-6 line-clamp-3">
               {deal.description}
             </p>
           )}
 
           <div className="flex items-baseline gap-3 mb-2">
-            <span className="font-heading text-5xl font-900 text-brand-red leading-none">
+            <span className="font-mono text-5xl font-medium text-accent tabular-nums leading-none">
               {formatPrice(deal.deal_price, deal.country)}
             </span>
             {deal.original_price && (
-              <span className="text-brand-gray text-xl line-through">
+              <span className="font-mono text-xl text-ink-muted line-through tabular-nums">
                 {formatPrice(deal.original_price, deal.country)}
               </span>
             )}
           </div>
 
           {savings && savings > 0 && (
-            <p className="text-brand-green font-bold text-sm mb-6">
+            <p className="text-good text-sm font-medium mb-6">
               Save {formatPrice(savings, deal.country)} — {discount}% off
             </p>
           )}
 
           {deal.coupon_code && (
-            <div className="flex items-center gap-2 mb-6 bg-brand-gold/10 border border-brand-gold/30
-                            rounded-lg px-4 py-2 w-fit">
-              <span className="text-brand-gold text-xs font-bold uppercase">Code:</span>
-              <code className="text-brand-gold font-mono font-black tracking-widest">{deal.coupon_code}</code>
+            <div className="flex items-center gap-2 mb-6 border border-rule px-3 py-2 w-fit">
+              <span className="text-[11px] tracking-wider text-ink-muted">CODE</span>
+              <code className="text-ink font-mono font-medium tracking-widest">{deal.coupon_code}</code>
             </div>
           )}
 
           <button disabled={clicking}
             className="btn-primary text-base px-8 py-4 w-full md:w-auto justify-center">
-            {clicking ? 'Opening...' : 'Get This Deal →'}
+            {clicking ? 'Opening…' : 'Get this deal →'}
           </button>
 
-          <p className="text-brand-gray text-xs mt-3">
-            At {deal.retailer_name} — affiliate link
+          <p className="text-ink-muted text-[11px] mt-3 tracking-wider">
+            AT {deal.retailer_name?.toUpperCase()} · AFFILIATE LINK
           </p>
         </div>
       </div>

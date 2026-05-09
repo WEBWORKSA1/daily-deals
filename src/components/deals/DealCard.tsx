@@ -13,6 +13,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState<string | null>(null)
   const [clicking, setClicking] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)  // ← NEW: track broken images
   const [userVote, setUserVote] = useState<number | null>(initialUserVote ?? null)
   const [upvotes, setUpvotes] = useState((deal as any).upvote_count || 0)
   const [downvotes, setDownvotes] = useState((deal as any).downvote_count || 0)
@@ -109,9 +110,12 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   const tier = score >= 45 ? hotnessTier(score) : null
   const netVotes = upvotes - downvotes
 
+  // Show placeholder if URL is missing OR if image failed to load
+  const showPlaceholder = !deal.image_url || imgFailed
+
   return (
     <div className="deal-card group cursor-pointer relative" onClick={handleCardClick}>
-      {/* SAVE button — minimal, top-right */}
+      {/* SAVE button */}
       <button onClick={handleSave}
         className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
           isSaved
@@ -124,13 +128,18 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
       {/* IMAGE */}
       <div className="relative bg-paper-2 aspect-square overflow-hidden flex-shrink-0 border-b border-rule">
-        {deal.image_url ? (
-          <img src={deal.image_url} alt={deal.title}
-            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-ink-muted text-xs tracking-widest">
-            DAILY DEAL
+        {showPlaceholder ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-ink-muted">
+            <span className="text-[11px] tracking-[0.2em]">DAILY DEAL</span>
+            <span className="text-[10px] tracking-wider text-ink-muted/70">{deal.retailer_name || ''}</span>
           </div>
+        ) : (
+          <img
+            src={deal.image_url!}
+            alt={deal.title}
+            onError={() => setImgFailed(true)}
+            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+          />
         )}
 
         {discount > 0 && (
@@ -140,9 +149,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         )}
       </div>
 
-      {/* CONTENT */}
       <div className="p-3.5 flex flex-col flex-1">
-        {/* EYEBROW: CATEGORY · RETAILER */}
         <div className="badge-eyebrow mb-2 truncate">
           {deal.retailer_name || 'RETAILER'}
         </div>
@@ -152,7 +159,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         </h3>
 
         <div className="mt-auto space-y-2.5">
-          {/* PRICE ROW */}
           <div className="flex items-baseline gap-2">
             <span className="price-now">
               {formatPrice(deal.deal_price, deal.country)}
@@ -164,7 +170,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             )}
           </div>
 
-          {/* META ROW: SAVINGS + COUPON CODE */}
           {(savings && savings > 0) || deal.coupon_code ? (
             <div className="flex items-center justify-between gap-2">
               {savings && savings > 0 ? (
@@ -184,7 +189,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             <div className="text-[11px] text-accent timer-pulse">Ends in {timeLeft}</div>
           )}
 
-          {/* VOTE STRIP */}
           {(upvotes > 0 || downvotes > 0 || tier) && (
             <div className="flex items-center justify-between gap-2 text-[11px] pt-2 border-t border-rule">
               <div className="flex items-center gap-1.5">
@@ -214,7 +218,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             </div>
           )}
 
-          {/* GET DEAL — full-width black button */}
           <button onClick={handleGetDeal} disabled={clicking}
             className="w-full bg-ink hover:bg-accent text-white
                        text-xs font-medium py-2.5 rounded

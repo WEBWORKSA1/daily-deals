@@ -1,11 +1,10 @@
 // Auto-bootstrap: ensures database is migrated, seeded, hotness scored, and price history seeded.
 // Safe to call on every request — uses a cached flag and idempotent operations.
 //
-// NEW IN THIS VERSION:
-//   - Self-healing scrape: if the deals table is empty AND ANTHROPIC_API_KEY is set,
-//     fire the scrape+curate pipeline in the background on cold start. Runs once per
-//     server-instance lifetime, so a homepage hit on a freshly-deployed Netlify
-//     instance auto-populates real deals without anyone clicking a button.
+// SELF-HEALING BEHAVIORS:
+//   1. Auto-clear bad seed deals (one-time, on first cold start after this commit)
+//   2. Auto-fire scrape+curate pipeline if deals table is empty AND ANTHROPIC_API_KEY is set
+//   3. Periodic hotness score recompute (every 15 min)
 
 import { supabase } from './db'
 import { runManagementSQL, MIGRATIONS } from './managementSQL'
@@ -17,7 +16,19 @@ let bootstrapPromise: Promise<{ ok: boolean, log: any[] }> | null = null
 let bootstrapCompleted = false
 let lastHotnessUpdate = 0
 let pipelineFired = false  // Per-instance flag — fires once on first cold start
+let seedsCleared = false   // Per-instance flag — clears bad seed URLs once
 const HOTNESS_TTL = 15 * 60 * 1000 // 15 min
+
+// Heuristic: a URL counts as a "bad seed image" if it's null OR points to one of the
+// known dead placeholder hosts we used during early development.
+const BAD_IMAGE_HOSTS = ['images.unsplash.com', 'via.placeholder.com', 'picsum.photos', 'placehold.co', 'placekitten.com']
+function isBadImageUrl(url: string | null): boolean {
+  if (!url) return false  // null is fine — placeholder UI handles it
+  try {
+    const u = new URL(url)
+    return BAD_IMAGE_HOSTS.some(h => u.hostname === h || u.hostname.endsWith('.' + h))
+  } catch { return true }  // malformed URL = bad
+}
 
 export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
   if (bootstrapCompleted) {
@@ -25,7 +36,10 @@ export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
       lastHotnessUpdate = Date.now()
       recomputeHotness().catch(() => {})
     }
-    // Self-healing: if deals are empty and we haven't fired yet this instance, kick it off
+    if (!seedsCleared) {
+      seedsCleared = true
+      clearBadSeeds().catch(() => {})
+    }
     if (!pipelineFired) {
       pipelineFired = true
       maybeFirePipeline().catch(() => {})
@@ -147,7 +161,7 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
       log.push({ step: 'editors_choice_seed', error: e?.message })
     }
 
-    // Initial price history snapshot for all active deals (only if none exist)
+    // Initial price history snapshot
     try {
       const { count: snapCount } = await supabase
         .from('deal_price_history')
@@ -160,19 +174,15 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
           .eq('is_active', true)
 
         const rows = (allDeals || []).map((d: any) => ({
-          deal_id: d.id,
-          price: d.deal_price,
-          original_price: d.original_price,
-          discount_percent: d.discount_percent,
+          deal_id: d.id, price: d.deal_price,
+          original_price: d.original_price, discount_percent: d.discount_percent,
         }))
         if (rows.length > 0) {
           await supabase.from('deal_price_history').insert(rows)
           for (const d of (allDeals || []) as any[]) {
             await supabase.from('deals').update({
-              lowest_price_ever: d.deal_price,
-              highest_price_ever: d.deal_price,
-              avg_price_30d: d.deal_price,
-              price_trend: 'stable',
+              lowest_price_ever: d.deal_price, highest_price_ever: d.deal_price,
+              avg_price_30d: d.deal_price, price_trend: 'stable',
             }).eq('id', d.id)
           }
           log.push({ step: 'seed_price_history', snapshots: rows.length })
@@ -187,7 +197,11 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
     bootstrapCompleted = true
     lastHotnessUpdate = Date.now()
 
-    // Final step: self-healing pipeline kick (background, fire-and-forget)
+    // Self-healing tail steps
+    if (!seedsCleared) {
+      seedsCleared = true
+      clearBadSeeds().catch(() => {})
+    }
     if (!pipelineFired) {
       pipelineFired = true
       maybeFirePipeline().catch(() => {})
@@ -224,12 +238,43 @@ async function recomputeHotness(): Promise<{ updated: number, error?: string }> 
   }
 }
 
-// Self-healing pipeline kicker. Runs once per Netlify-instance cold start.
-// Fires the scrape+curate pipeline IF:
-//   1. ANTHROPIC_API_KEY is configured (otherwise curator can't run)
-//   2. The deals table has fewer than 5 active rows (i.e. site is empty/near-empty)
-// This means the first homepage hit after a fresh deploy auto-populates real deals
-// in the background — no admin login, no button click, no waiting for the cron.
+// Auto-clear deals that have placeholder image URLs from dev seeding.
+// Runs once per Netlify-instance lifetime. Safe and idempotent: if there are no
+// bad URLs, this is a no-op.
+async function clearBadSeeds(): Promise<void> {
+  try {
+    const { data: active } = await supabase
+      .from('deals')
+      .select('id, image_url, affiliate_url')
+      .eq('is_active', true)
+      .limit(1000)
+
+    if (!active || active.length === 0) return
+
+    const badIds = (active as any[])
+      .filter(d => isBadImageUrl(d.image_url))
+      .map(d => d.id)
+
+    if (badIds.length === 0) {
+      console.log('[autoBootstrap] no bad seed images found')
+      return
+    }
+
+    const { error } = await supabase
+      .from('deals')
+      .update({ is_active: false })
+      .in('id', badIds)
+
+    if (error) {
+      console.error('[autoBootstrap] clearBadSeeds failed:', error.message)
+    } else {
+      console.log('[autoBootstrap] deactivated', badIds.length, 'deals with bad placeholder images')
+    }
+  } catch (e: any) {
+    console.error('[autoBootstrap] clearBadSeeds error:', e?.message)
+  }
+}
+
 async function maybeFirePipeline(): Promise<void> {
   try {
     if (!process.env.ANTHROPIC_API_KEY) return
@@ -251,7 +296,6 @@ async function maybeFirePipeline(): Promise<void> {
 
     console.log('[autoBootstrap] firing scrape pipeline at', siteUrl)
 
-    // Fire scrape, then curate. Do not await on the homepage handler.
     fetch(`${siteUrl}/api/scrape/run`, {
       method: 'POST',
       headers: {
@@ -298,6 +342,7 @@ export function getBootstrapStatus() {
     completed: bootstrapCompleted,
     inFlight: !!bootstrapPromise && !bootstrapCompleted,
     pipelineFired,
+    seedsCleared,
     lastHotnessUpdate: lastHotnessUpdate ? new Date(lastHotnessUpdate).toISOString() : null,
   }
 }
