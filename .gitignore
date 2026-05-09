@@ -1,1 +1,10 @@
-LmVudgoubG9jYWwKLmVudi5sb2NhbAouZW52Ki5sb2NhbAoubmV4dC8Kbm9kZV9tb2R1bGVzLwpvdXQvCioubG9nCi5EU19TdG9yZQo=
+.env
+.local
+.env.local
+.env*.local
+.next/
+node_modules/
+out/
+*.log
+.DS_Store
+.netlify/
