@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Script from 'next/script'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -18,7 +17,6 @@ import { priceQualityRating } from '@/lib/priceHistory'
 import { buildProductSchema, buildBreadcrumbSchema } from '@/lib/schema'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 interface Props { params: { id: string } }
 
@@ -114,9 +112,10 @@ export default async function DealPage({ params }: Props) {
 
   return (
     <>
-      <Script id={`product-schema-${id}`} type="application/ld+json"
+      {/* JSON-LD schemas — plain <script> tags (Next.js Script component requires "use client" in some contexts) */}
+      <script type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
-      <Script id={`breadcrumb-schema-${id}`} type="application/ld+json"
+      <script type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <Header />
       <main>
@@ -228,11 +227,9 @@ export default async function DealPage({ params }: Props) {
               />
             </div>
 
-            {/* SHARE BAR — Pinterest, Facebook, Twitter, Reddit, copy link */}
             <ShareBar dealId={deal.id} title={deal.title}
               ogImageUrl={`https://daily.deals/deal/${deal.id}/og-image`} />
 
-            {/* COMMENTS */}
             <div className="mb-6 mt-6">
               <Comments dealId={deal.id} />
             </div>
