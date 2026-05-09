@@ -1,0 +1,41 @@
+import type { RawDeal } from './types'
+import { fetchHTML, stripTags, parsePrice, decodeHtmlEntities, extractAll } from './utils'
+
+export async function scrapeIndigo(): Promise<RawDeal[]> {
+  const sourceUrl = 'https://www.indigo.ca/en-ca/deals'
+  const html = await fetchHTML(sourceUrl)
+  const out: RawDeal[] = []
+
+  const tilePattern = /<a[^>]+href="(\/en-ca\/[^"]+\/\d{13}\.html)"[^>]*>([\s\S]{0,800}?)<\/a>/gi
+  const tiles = extractAll(html, tilePattern)
+
+  for (const tile of tiles) {
+    const path = tile[1]
+    const tileBody = tile[2]
+
+    const titleMatch = tileBody.match(/<span[^>]*>([^<]{15,200})<\/span>/i)
+    if (!titleMatch) continue
+    const title = decodeHtmlEntities(stripTags(titleMatch[1])).trim()
+    if (title.length < 10) continue
+
+    const prices = extractAll(tileBody, /\$\s?(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)/g)
+      .map(m => parsePrice(m[0])).filter((p): p is number => p !== null).sort((a, b) => a - b)
+    if (!prices.length) continue
+
+    out.push({
+      retailer_slug: 'indigo',
+      retailer_name: 'Indigo',
+      country: 'CA',
+      source_url: sourceUrl,
+      product_url: path.startsWith('http') ? path : `https://www.indigo.ca${path}`,
+      title: title.slice(0, 200),
+      deal_price: prices[0],
+      original_price: prices.length > 1 ? prices[prices.length - 1] : null,
+      discount_percent: prices.length > 1 ? Math.round(((prices[prices.length - 1] - prices[0]) / prices[prices.length - 1]) * 100) : null,
+      deal_type: 'daily',
+    })
+    if (out.length >= 30) break
+  }
+
+  return out
+}

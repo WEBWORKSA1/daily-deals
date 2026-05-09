@@ -293,12 +293,10 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
     id: '010_cashback',
     name: 'Cashback tracking — clicks + retailer rates',
     sql: `
-      -- Cashback rate per retailer (% you'll share with users)
       ALTER TABLE public.retailers
         ADD COLUMN IF NOT EXISTS commission_rate DECIMAL(5, 2) DEFAULT 5.00,
         ADD COLUMN IF NOT EXISTS cashback_rate DECIMAL(5, 2) DEFAULT 2.00;
 
-      -- Track cashback earnings per user
       CREATE TABLE IF NOT EXISTS public.cashback_events (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
@@ -306,7 +304,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
         retailer_id INTEGER REFERENCES public.retailers(id) ON DELETE SET NULL,
         click_id VARCHAR(64) UNIQUE,
         status VARCHAR(20) DEFAULT 'pending',
-          -- 'pending' | 'confirmed' | 'paid' | 'rejected'
         estimated_purchase_amount DECIMAL(10, 2),
         confirmed_purchase_amount DECIMAL(10, 2),
         cashback_rate DECIMAL(5, 2),
@@ -321,7 +318,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_cashback_click
         ON public.cashback_events(click_id);
 
-      -- User cashback wallet
       CREATE TABLE IF NOT EXISTS public.user_cashback_balance (
         user_id INTEGER PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
         pending_amount DECIMAL(10, 2) DEFAULT 0,
@@ -334,6 +330,48 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       GRANT SELECT, INSERT ON public.cashback_events TO authenticated, anon;
       GRANT USAGE ON SEQUENCE public.cashback_events_id_seq TO authenticated, anon;
       GRANT SELECT, INSERT, UPDATE ON public.user_cashback_balance TO authenticated, anon;
+    `,
+  },
+  {
+    id: '011_scraped_deals_raw',
+    name: 'Raw scraped deals queue (for curator to evaluate)',
+    sql: `
+      CREATE TABLE IF NOT EXISTS public.scraped_deals_raw (
+        id SERIAL PRIMARY KEY,
+        retailer_slug VARCHAR(50) NOT NULL,
+        retailer_name VARCHAR(100) NOT NULL,
+        country VARCHAR(2) NOT NULL,
+        source_url TEXT NOT NULL,
+        product_url TEXT UNIQUE NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        description TEXT,
+        image_url TEXT,
+        category VARCHAR(50),
+        deal_price DECIMAL(10, 2) NOT NULL,
+        original_price DECIMAL(10, 2),
+        discount_percent INTEGER,
+        coupon_code VARCHAR(50),
+        expires_at TIMESTAMP,
+        deal_type VARCHAR(20) DEFAULT 'daily',
+        raw JSONB,
+
+        status VARCHAR(20) DEFAULT 'pending',
+          -- 'pending' | 'published' | 'rejected' | 'error'
+        published_deal_id INTEGER REFERENCES public.deals(id) ON DELETE SET NULL,
+        curator_score INTEGER,
+        curator_reasoning TEXT,
+
+        scraped_at TIMESTAMP DEFAULT NOW(),
+        judged_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_scraped_status
+        ON public.scraped_deals_raw(status, scraped_at);
+      CREATE INDEX IF NOT EXISTS idx_scraped_retailer
+        ON public.scraped_deals_raw(retailer_slug);
+      CREATE INDEX IF NOT EXISTS idx_scraped_published
+        ON public.scraped_deals_raw(published_deal_id) WHERE published_deal_id IS NOT NULL;
+      GRANT SELECT, INSERT, UPDATE ON public.scraped_deals_raw TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.scraped_deals_raw_id_seq TO authenticated, anon;
     `,
   },
 ]
