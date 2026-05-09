@@ -30,13 +30,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/contact`,             lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
   ]
 
+  // SEO landing pages live at /topic/[slug]
   const seoLandingSlugs = [
     'best-deals-today', 'amazon-deals-today', 'walmart-deals-today',
     'best-laptop-deals', 'best-phone-deals', 'best-tv-deals',
     'best-gaming-deals', 'cheap-gadgets-deals', 'black-friday-deals',
   ]
   const seoLandingPages: MetadataRoute.Sitemap = seoLandingSlugs.map(slug => ({
-    url: `${BASE}/${slug}`,
+    url: `${BASE}/topic/${slug}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
     priority: 0.85,
