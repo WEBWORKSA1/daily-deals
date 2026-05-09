@@ -247,7 +247,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
     id: '009_comments_and_flags',
     name: 'Comments + flags for community moderation',
     sql: `
-      -- Comments on deals
       CREATE TABLE IF NOT EXISTS public.deal_comments (
         id SERIAL PRIMARY KEY,
         deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
@@ -264,13 +263,12 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_comments_user ON public.deal_comments(user_id);
       CREATE INDEX IF NOT EXISTS idx_comments_parent ON public.deal_comments(parent_id);
 
-      -- Flags / reports
       CREATE TABLE IF NOT EXISTS public.flags (
         id SERIAL PRIMARY KEY,
         flagged_by_user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
-        target_type VARCHAR(20) NOT NULL,        -- 'deal' | 'comment'
+        target_type VARCHAR(20) NOT NULL,
         target_id INTEGER NOT NULL,
-        reason VARCHAR(50) NOT NULL,             -- 'spam' | 'expired' | 'wrong_price' | 'inappropriate' | 'other'
+        reason VARCHAR(50) NOT NULL,
         details TEXT,
         is_resolved BOOLEAN DEFAULT FALSE,
         resolved_by_user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
@@ -289,6 +287,53 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       GRANT USAGE ON SEQUENCE public.deal_comments_id_seq TO authenticated, anon;
       GRANT SELECT, INSERT ON public.flags TO authenticated, anon;
       GRANT USAGE ON SEQUENCE public.flags_id_seq TO authenticated, anon;
+    `,
+  },
+  {
+    id: '010_cashback',
+    name: 'Cashback tracking — clicks + retailer rates',
+    sql: `
+      -- Cashback rate per retailer (% you'll share with users)
+      ALTER TABLE public.retailers
+        ADD COLUMN IF NOT EXISTS commission_rate DECIMAL(5, 2) DEFAULT 5.00,
+        ADD COLUMN IF NOT EXISTS cashback_rate DECIMAL(5, 2) DEFAULT 2.00;
+
+      -- Track cashback earnings per user
+      CREATE TABLE IF NOT EXISTS public.cashback_events (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+        deal_id INTEGER REFERENCES public.deals(id) ON DELETE SET NULL,
+        retailer_id INTEGER REFERENCES public.retailers(id) ON DELETE SET NULL,
+        click_id VARCHAR(64) UNIQUE,
+        status VARCHAR(20) DEFAULT 'pending',
+          -- 'pending' | 'confirmed' | 'paid' | 'rejected'
+        estimated_purchase_amount DECIMAL(10, 2),
+        confirmed_purchase_amount DECIMAL(10, 2),
+        cashback_rate DECIMAL(5, 2),
+        cashback_amount DECIMAL(10, 2),
+        clicked_at TIMESTAMP DEFAULT NOW(),
+        confirmed_at TIMESTAMP,
+        paid_at TIMESTAMP,
+        notes TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_cashback_user
+        ON public.cashback_events(user_id, status);
+      CREATE INDEX IF NOT EXISTS idx_cashback_click
+        ON public.cashback_events(click_id);
+
+      -- User cashback wallet
+      CREATE TABLE IF NOT EXISTS public.user_cashback_balance (
+        user_id INTEGER PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+        pending_amount DECIMAL(10, 2) DEFAULT 0,
+        available_amount DECIMAL(10, 2) DEFAULT 0,
+        lifetime_earned DECIMAL(10, 2) DEFAULT 0,
+        lifetime_paid DECIMAL(10, 2) DEFAULT 0,
+        last_updated TIMESTAMP DEFAULT NOW()
+      );
+
+      GRANT SELECT, INSERT ON public.cashback_events TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.cashback_events_id_seq TO authenticated, anon;
+      GRANT SELECT, INSERT, UPDATE ON public.user_cashback_balance TO authenticated, anon;
     `,
   },
 ]
