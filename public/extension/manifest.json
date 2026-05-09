@@ -5,12 +5,12 @@
   "version": "1.0.0",
   "description": "Get notified when there's a better deal on Daily.Deals while you shop. Auto-detects 19+ major retailers.",
   "icons": {
-    "128": "icon.png"
+    "128": "icon.svg"
   },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Daily.Deals — Better prices",
-    "default_icon": "icon.png"
+    "default_icon": "icon.svg"
   },
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
@@ -65,7 +65,6 @@
     }
   ],
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   }
 }
