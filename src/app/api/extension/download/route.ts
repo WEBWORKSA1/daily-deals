@@ -6,6 +6,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET() {
   try {
@@ -53,19 +54,21 @@ PRIVACY:
 WEBSITE: https://daily.deals
 `)
 
-    // Generate as Uint8Array (web-standard, accepted by Response/NextResponse).
-    // Avoid `nodebuffer` because TS's strict BodyInit type rejects Node's Buffer.
-    const bytes = await zip.generateAsync({ type: 'uint8array' })
+    // Generate as ArrayBuffer and wrap in Blob — Blob is unambiguously a
+    // BodyInit, while Uint8Array/Buffer hit TS lib generic-mismatch errors
+    // on certain TS/Next combinations.
+    const arrayBuffer = await zip.generateAsync({ type: 'arraybuffer' })
+    const blob = new Blob([arrayBuffer], { type: 'application/zip' })
 
-    return new NextResponse(bytes, {
+    return new NextResponse(blob, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename="daily-deals-extension.zip"',
         'Cache-Control': 'public, max-age=300',
-        'Content-Length': String(bytes.byteLength),
+        'Content-Length': String(blob.size),
       },
     })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json({ error: e.message || String(e) }, { status: 500 })
   }
 }
