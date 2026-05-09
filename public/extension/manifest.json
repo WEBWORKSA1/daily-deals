@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "Daily.Deals — Better prices on every site",
+  "short_name": "Daily.Deals",
+  "version": "1.0.0",
+  "description": "Get notified when there's a better deal on Daily.Deals while you shop. Auto-detects 19+ major retailers.",
+  "icons": {
+    "128": "icon.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Daily.Deals — Better prices",
+    "default_icon": "icon.png"
+  },
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "*://*.amazon.com/*",
+    "*://*.amazon.ca/*",
+    "*://*.walmart.com/*",
+    "*://*.walmart.ca/*",
+    "*://*.bestbuy.com/*",
+    "*://*.bestbuy.ca/*",
+    "*://*.target.com/*",
+    "*://*.costco.com/*",
+    "*://*.costco.ca/*",
+    "*://*.homedepot.com/*",
+    "*://*.homedepot.ca/*",
+    "*://*.lowes.com/*",
+    "*://*.lowes.ca/*",
+    "*://*.apple.com/*",
+    "*://*.nike.com/*",
+    "*://*.sephora.com/*",
+    "*://*.ulta.com/*",
+    "*://*.macys.com/*",
+    "*://*.nordstrom.com/*",
+    "*://*.ebay.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.ca/*",
+        "*://*.walmart.com/*",
+        "*://*.walmart.ca/*",
+        "*://*.bestbuy.com/*",
+        "*://*.bestbuy.ca/*",
+        "*://*.target.com/*",
+        "*://*.costco.com/*",
+        "*://*.costco.ca/*",
+        "*://*.homedepot.com/*",
+        "*://*.homedepot.ca/*",
+        "*://*.lowes.com/*",
+        "*://*.lowes.ca/*",
+        "*://*.apple.com/*",
+        "*://*.nike.com/*",
+        "*://*.sephora.com/*",
+        "*://*.ulta.com/*",
+        "*://*.macys.com/*",
+        "*://*.nordstrom.com/*",
+        "*://*.ebay.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}
