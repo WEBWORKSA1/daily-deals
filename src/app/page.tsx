@@ -40,6 +40,29 @@ async function getFeaturedDeals(): Promise<Deal[]> {
   } catch { return [] }
 }
 
+async function getHottestDeals(): Promise<Deal[]> {
+  try {
+    const { data } = await supabase.from('deals')
+      .select('*, retailers(name, slug, brand_color, affiliate_net)')
+      .eq('is_active', true)
+      .order('hotness_score', { ascending: false })
+      .order('discount_percent', { ascending: false })
+      .limit(8)
+    return mapDeals(data || [])
+  } catch { return [] }
+}
+
+async function getEditorsChoice(): Promise<Deal[]> {
+  try {
+    const { data } = await supabase.from('deals')
+      .select('*, retailers(name, slug, brand_color, affiliate_net)')
+      .eq('is_active', true).eq('is_editors_choice', true)
+      .order('hotness_score', { ascending: false })
+      .limit(4)
+    return mapDeals(data || [])
+  } catch { return [] }
+}
+
 async function getFlashDeals(): Promise<Deal[]> {
   try {
     const { data } = await supabase.from('deals')
@@ -97,15 +120,22 @@ async function getTotalDeals(): Promise<number> {
 }
 
 export default async function HomePage() {
-  // Auto-run migrations + seeding on first cold start. Subsequent calls are no-ops.
-  // Fire and forget so it doesn't block the page render — bootstrap finishes in the background.
+  // Auto-run migrations + seeding + hotness scoring on cold start. Cached after.
   ensureBootstrapped().catch(() => {})
 
-  const [featured, flash, clearance, usDeals, caDeals, retailers, totalDeals] = await Promise.all([
-    getFeaturedDeals(), getFlashDeals(), getClearanceDeals(), getUSDeals(), getCADeals(), getRetailers(), getTotalDeals()
+  const [featured, hottest, editorsChoice, flash, clearance, usDeals, caDeals, retailers, totalDeals] = await Promise.all([
+    getFeaturedDeals(),
+    getHottestDeals(),
+    getEditorsChoice(),
+    getFlashDeals(),
+    getClearanceDeals(),
+    getUSDeals(),
+    getCADeals(),
+    getRetailers(),
+    getTotalDeals()
   ])
 
-  const spotlightDeal = featured[0] || flash[0] || null
+  const spotlightDeal = featured[0] || hottest[0] || flash[0] || null
 
   return (
     <>
@@ -130,6 +160,25 @@ export default async function HomePage() {
 
           {/* DAILY LOCAL DEALS — 3 tiers, postal code aware */}
           <LocalDealsSection />
+
+          {/* DAILY HOT DEALS — sorted by hotness score */}
+          {hottest.length > 0 && (
+            <DealSection
+              title="🔥 Daily Hot Deals"
+              deals={hottest}
+              viewAllHref="/deals/hot"
+              highlight
+            />
+          )}
+
+          {/* EDITOR'S CHOICE */}
+          {editorsChoice.length > 0 && (
+            <DealSection
+              title="⭐ Editor's Choice"
+              deals={editorsChoice}
+              viewAllHref="/deals/hot"
+            />
+          )}
 
           {/* DAILY FLASH DEALS */}
           {flash.length > 0 && (
