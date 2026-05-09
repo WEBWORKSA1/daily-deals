@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useLocation } from '@/hooks/useLocation'
 import { CATEGORIES } from '@/lib/utils'
@@ -10,6 +10,12 @@ export default function Header() {
   const [showModal, setShowModal] = useState(false)
   const [input, setInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  // Load session
+  useEffect(() => {
+    fetch('/api/auth').then(r => r.json()).then(j => setUser(j.user)).catch(() => {})
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -72,6 +78,22 @@ export default function Header() {
               <button className="md:hidden bg-brand-dark-4 border border-white/10 p-2 rounded-lg text-brand-gray-2">
                 🔍
               </button>
+
+              {/* ACCOUNT */}
+              {user ? (
+                <Link href="/account"
+                  className="hidden sm:flex items-center gap-1.5 bg-brand-dark-4 hover:bg-brand-dark-5
+                             border border-white/10 hover:border-brand-red/40
+                             px-3 py-2 rounded-lg text-xs font-medium text-white transition-all">
+                  <span>👤</span>
+                  <span className="max-w-[80px] truncate">{user.username || user.email.split('@')[0]}</span>
+                </Link>
+              ) : (
+                <Link href="/signin"
+                  className="hidden sm:inline-flex text-xs font-bold text-brand-gray-2 hover:text-white px-3 py-2 transition-colors">
+                  Sign In
+                </Link>
+              )}
 
               {/* CTA */}
               <Link href="/deals/hot" className="btn-primary hidden sm:inline-flex">
