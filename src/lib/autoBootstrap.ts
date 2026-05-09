@@ -1,4 +1,4 @@
-// Auto-bootstrap: ensures database is migrated, seeded, and hotness scored.
+// Auto-bootstrap: ensures database is migrated, seeded, hotness scored, and price history seeded.
 // Safe to call on every request — uses a cached flag and idempotent operations.
 
 import { supabase } from './db'
@@ -14,7 +14,6 @@ const HOTNESS_TTL = 15 * 60 * 1000 // 15 min
 
 export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
   if (bootstrapCompleted) {
-    // Recompute hotness if stale
     if (Date.now() - lastHotnessUpdate > HOTNESS_TTL) {
       lastHotnessUpdate = Date.now()
       recomputeHotness().catch(() => {})
@@ -37,7 +36,6 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
   }
 
   try {
-    // Ensure tracking table
     const trackingMigration = MIGRATIONS.find(m => m.id === '004_create_migrations_log')
     if (trackingMigration) {
       const r = await runManagementSQL(trackingMigration.sql)
@@ -67,14 +65,9 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
 
     if ((postalCount || 0) < 50) {
       const rows = allPostals().map(p => ({
-        code: p.code,
-        country: p.country,
-        city: p.city,
-        province_state: p.province_state,
-        state_code: p.state_code,
-        latitude: p.latitude,
-        longitude: p.longitude,
-        source: 'seeded',
+        code: p.code, country: p.country, city: p.city,
+        province_state: p.province_state, state_code: p.state_code,
+        latitude: p.latitude, longitude: p.longitude, source: 'seeded',
       }))
       const { error } = await supabase
         .from('postal_code_locations')
@@ -110,49 +103,74 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
       const anchor = slug ? STORE_ANCHORS[slug] : null
       if (!anchor || anchor.online) {
         await supabase.from('deals').update({
-          is_online_only: true,
-          store_latitude: null,
-          store_longitude: null,
-          store_city: null,
-          store_postal: null,
+          is_online_only: true, store_latitude: null, store_longitude: null,
+          store_city: null, store_postal: null,
         }).eq('id', d.id)
         online++
       } else {
         await supabase.from('deals').update({
-          is_online_only: false,
-          store_latitude: anchor.lat,
-          store_longitude: anchor.lng,
-          store_city: anchor.city,
-          store_postal: anchor.postal,
+          is_online_only: false, store_latitude: anchor.lat, store_longitude: anchor.lng,
+          store_city: anchor.city, store_postal: anchor.postal,
         }).eq('id', d.id)
         physical++
       }
     }
     log.push({ step: 'tag_deals', total: deals?.length || 0, online, physical })
 
-    // Initial hotness computation
+    // Hotness
     const hr = await recomputeHotness()
     log.push({ step: 'compute_hotness', ...hr })
 
-    // Auto-mark top 3 by discount as Editor's Choice (initial seed)
+    // Editor's Choice seed
     try {
       const { data: topDiscounts } = await supabase
-        .from('deals')
-        .select('id')
-        .eq('is_active', true)
-        .eq('is_featured', true)
-        .order('discount_percent', { ascending: false })
-        .limit(3)
+        .from('deals').select('id').eq('is_active', true).eq('is_featured', true)
+        .order('discount_percent', { ascending: false }).limit(3)
       if (topDiscounts && topDiscounts.length > 0) {
         const ids = topDiscounts.map((d: any) => d.id)
-        await supabase
-          .from('deals')
-          .update({ is_editors_choice: true })
-          .in('id', ids)
+        await supabase.from('deals').update({ is_editors_choice: true }).in('id', ids)
         log.push({ step: 'editors_choice_seed', tagged: ids.length })
       }
     } catch (e: any) {
       log.push({ step: 'editors_choice_seed', error: e?.message })
+    }
+
+    // Initial price history snapshot for all active deals (only if none exist)
+    try {
+      const { count: snapCount } = await supabase
+        .from('deal_price_history')
+        .select('*', { count: 'exact', head: true })
+
+      if ((snapCount || 0) === 0) {
+        const { data: allDeals } = await supabase
+          .from('deals')
+          .select('id, deal_price, original_price, discount_percent')
+          .eq('is_active', true)
+
+        const rows = (allDeals || []).map((d: any) => ({
+          deal_id: d.id,
+          price: d.deal_price,
+          original_price: d.original_price,
+          discount_percent: d.discount_percent,
+        }))
+        if (rows.length > 0) {
+          await supabase.from('deal_price_history').insert(rows)
+          // Update lowest/highest/avg = current price for all
+          for (const d of (allDeals || []) as any[]) {
+            await supabase.from('deals').update({
+              lowest_price_ever: d.deal_price,
+              highest_price_ever: d.deal_price,
+              avg_price_30d: d.deal_price,
+              price_trend: 'stable',
+            }).eq('id', d.id)
+          }
+          log.push({ step: 'seed_price_history', snapshots: rows.length })
+        }
+      } else {
+        log.push({ step: 'seed_price_history', skipped: true, existing: snapCount })
+      }
+    } catch (e: any) {
+      log.push({ step: 'seed_price_history', error: e?.message })
     }
 
     bootstrapCompleted = true
@@ -165,7 +183,6 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
   }
 }
 
-// Recompute hotness scores for all active deals
 async function recomputeHotness(): Promise<{ updated: number, error?: string }> {
   try {
     const { data: deals, error } = await supabase
@@ -179,10 +196,7 @@ async function recomputeHotness(): Promise<{ updated: number, error?: string }> 
       const score = computeHotness(d)
       const { error: upErr } = await supabase
         .from('deals')
-        .update({
-          hotness_score: score,
-          hotness_updated_at: new Date().toISOString(),
-        })
+        .update({ hotness_score: score, hotness_updated_at: new Date().toISOString() })
         .eq('id', d.id)
       if (!upErr) updated++
     }
