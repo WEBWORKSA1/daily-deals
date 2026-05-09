@@ -112,4 +112,37 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
         ON public.deals(is_editors_choice) WHERE is_editors_choice = TRUE;
     `,
   },
+  {
+    id: '006_extend_subscribers',
+    name: 'Extend email_subscribers + create deal_alerts',
+    sql: `
+      ALTER TABLE public.email_subscribers
+        ADD COLUMN IF NOT EXISTS country VARCHAR(2) DEFAULT 'US',
+        ADD COLUMN IF NOT EXISTS postal_code VARCHAR(10),
+        ADD COLUMN IF NOT EXISTS frequency VARCHAR(20) DEFAULT 'daily',
+        ADD COLUMN IF NOT EXISTS preferred_categories TEXT[],
+        ADD COLUMN IF NOT EXISTS confirmed BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS confirm_token VARCHAR(64),
+        ADD COLUMN IF NOT EXISTS unsubscribe_token VARCHAR(64),
+        ADD COLUMN IF NOT EXISTS last_sent_at TIMESTAMP;
+
+      CREATE TABLE IF NOT EXISTS public.deal_alerts (
+        id SERIAL PRIMARY KEY,
+        subscriber_id INTEGER REFERENCES public.email_subscribers(id) ON DELETE CASCADE,
+        keyword VARCHAR(100),
+        retailer_slug VARCHAR(50),
+        category VARCHAR(50),
+        min_discount INTEGER DEFAULT 30,
+        max_price DECIMAL(10, 2),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        last_matched_at TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_alerts_subscriber ON public.deal_alerts(subscriber_id);
+      CREATE INDEX IF NOT EXISTS idx_alerts_active ON public.deal_alerts(is_active) WHERE is_active = TRUE;
+
+      GRANT SELECT, INSERT, UPDATE, DELETE ON public.deal_alerts TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.deal_alerts_id_seq TO authenticated, anon;
+    `,
+  },
 ]
