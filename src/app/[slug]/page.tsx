@@ -1,19 +1,19 @@
-// This dynamic route at the app root would conflict with static top-level routes
-// like /about, /cashback, /extension. Use /topic/[slug] instead — see app/topic/[slug]/page.tsx.
-// This file exists only to mark the directory; Next will only render it when a slug
-// is provided that isn't matched by any static folder, and we 404 those.
+// SEO landing pages live at /topic/[slug] — see app/topic/[slug]/page.tsx.
+// This route exists with empty static params + dynamicParams=false, which means:
+//   - At build time: no pages are generated for this dynamic segment.
+//   - At runtime: any /[anything] URL returns 404 unless matched by a static folder.
+// Static top-level routes (/about, /cashback, etc.) take priority and render normally.
 
-import { notFound } from 'next/navigation'
+interface Props { params: { slug: string } }
 
-export const dynamic = 'force-static'
+export const dynamicParams = false
 
-export default function NotFoundRoute() {
-  notFound()
-}
-
-// Empty static params — this route should never render at build time.
 export async function generateStaticParams() {
+  // No slugs — this route never matches at build time.
   return []
 }
 
-export const dynamicParams = false
+export default function CatchAllSlug({ params }: Props) {
+  // Unreachable at runtime when dynamicParams=false + empty staticParams.
+  return null
+}
