@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -38,6 +37,24 @@ async function getDeal(id: number): Promise<Deal | null> {
   } catch { return null }
 }
 
+async function getRecentDeals(): Promise<Deal[]> {
+  try {
+    const { data } = await supabase
+      .from('deals')
+      .select('*, retailers(name, slug, brand_color, affiliate_net)')
+      .eq('is_active', true)
+      .order('hotness_score', { ascending: false })
+      .limit(8)
+    return (data || []).map((d: any) => ({
+      ...d,
+      retailer_name: d.retailers?.name,
+      retailer_slug: d.retailers?.slug,
+      retailer_brand_color: d.retailers?.brand_color,
+      affiliate_net: d.retailers?.affiliate_net,
+    }))
+  } catch { return [] }
+}
+
 async function getRelatedDeals(deal: Deal): Promise<Deal[]> {
   try {
     const { data } = await supabase
@@ -60,7 +77,7 @@ async function getRelatedDeals(deal: Deal): Promise<Deal[]> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const deal = await getDeal(parseInt(params.id))
-  if (!deal) return { title: 'Deal not found — Daily.Deals' }
+  if (!deal) return { title: 'Deal not available — Daily.Deals' }
   const url = `https://daily.deals/deal/${deal.id}`
   const ogImageUrl = `https://daily.deals/deal/${deal.id}/og-image`
   const discount = deal.discount_percent || (deal.original_price
@@ -88,10 +105,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DealPage({ params }: Props) {
   const id = parseInt(params.id)
-  if (isNaN(id)) return notFound()
+
+  // Bad ID format → friendly soft-404 with recommendations
+  if (isNaN(id)) {
+    return <DealUnavailable reason="bad-id" />
+  }
 
   const deal = await getDeal(id)
-  if (!deal) return notFound()
+
+  // Deal doesn't exist or expired → friendly soft-404 with current top deals
+  if (!deal) {
+    const recent = await getRecentDeals()
+    return <DealUnavailable reason="missing" recent={recent} />
+  }
 
   const related = await getRelatedDeals(deal)
 
@@ -112,110 +138,116 @@ export default async function DealPage({ params }: Props) {
 
   return (
     <>
-      {/* JSON-LD schemas — plain <script> tags (Next.js Script component requires "use client" in some contexts) */}
       <script type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <Header />
       <main>
+        {/* BREADCRUMB */}
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <div className="text-xs text-brand-gray flex items-center gap-2">
-            <Link href="/" className="hover:text-white">Home</Link>
+          <div className="text-xs text-ink-muted flex items-center gap-2">
+            <Link href="/" className="hover:text-ink">Home</Link>
             <span>/</span>
             {deal.retailer_slug && (
               <>
-                <Link href={`/store/${deal.retailer_slug}`} className="hover:text-white">
+                <Link href={`/store/${deal.retailer_slug}`} className="hover:text-ink">
                   {deal.retailer_name}
                 </Link>
                 <span>/</span>
               </>
             )}
-            <span className="text-white truncate max-w-md">{deal.title}</span>
+            <span className="text-ink truncate max-w-md">{deal.title}</span>
           </div>
         </div>
 
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
 
           <div>
-            <div className="bg-brand-dark-3 border border-white/5 rounded-2xl overflow-hidden mb-6">
+            {/* IMAGE */}
+            <div className="bg-white border border-rule overflow-hidden mb-6">
               {deal.image_url ? (
                 <img src={deal.image_url} alt={deal.title} className="w-full h-96 object-cover" />
               ) : (
-                <div className="w-full h-96 flex items-center justify-center text-8xl opacity-20">🛍️</div>
+                <div className="w-full h-96 flex items-center justify-center bg-paper-2 text-ink-muted text-xs tracking-widest">
+                  DAILY DEAL
+                </div>
               )}
             </div>
 
+            {/* META BADGES */}
             <div className="flex flex-wrap gap-2 mb-4">
               {tier && (
-                <span className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md flex items-center gap-1"
-                      style={{ background: tier.color, color: tier.textColor }}>
-                  {tier.emoji} {tier.label}
+                <span className="text-[11px] font-medium tracking-wider px-2 py-0.5 border border-rule">
+                  HOTNESS {tier.label}
                 </span>
               )}
               {deal.is_editors_choice && (
-                <span className="bg-gradient-to-r from-yellow-500 to-amber-400 text-black text-xs font-black
-                                 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                  ⭐ Editor's Pick
+                <span className="text-[11px] font-medium tracking-wider px-2 py-0.5 bg-ink text-white">
+                  EDITOR&apos;S PICK
                 </span>
               )}
               {(deal.is_verified || (deal.click_count || 0) >= 5) && (
-                <span className="bg-brand-green/90 text-white text-xs font-bold px-2.5 py-1 rounded-md">
-                  ✓ Verified
+                <span className="text-[11px] font-medium tracking-wider px-2 py-0.5 bg-good text-white">
+                  VERIFIED
                 </span>
               )}
               {deal.deal_type === 'flash' && (
-                <span className="bg-brand-gold/15 text-brand-gold border border-brand-gold/30 text-xs
-                                 font-bold px-2.5 py-1 rounded-md">⚡ Flash Deal</span>
+                <span className="text-[11px] font-medium tracking-wider px-2 py-0.5 bg-accent text-white">
+                  DAILY FLASH
+                </span>
               )}
               {deal.deal_type === 'clearance' && (
-                <span className="bg-blue-500/15 text-blue-400 border border-blue-500/30 text-xs
-                                 font-bold px-2.5 py-1 rounded-md">Clearance</span>
+                <span className="text-[11px] font-medium tracking-wider px-2 py-0.5 border border-rule">
+                  DAILY CLEARANCE
+                </span>
               )}
-              <span className="text-xs px-2.5 py-1">{deal.country === 'CA' ? '🇨🇦 Canada' : '🇺🇸 United States'}</span>
+              <span className="text-[11px] tracking-wider px-2 py-0.5 border border-rule text-ink-muted">
+                {deal.country === 'CA' ? 'CANADA' : 'UNITED STATES'}
+              </span>
             </div>
 
-            <h1 className="font-heading text-3xl md:text-4xl font-900 text-white mb-3 leading-tight">
+            {/* RETAILER + TITLE */}
+            <div className="badge-eyebrow mb-2">{deal.retailer_name?.toUpperCase() || 'RETAILER'}</div>
+            <h1 className="font-serif text-3xl md:text-4xl font-medium text-ink mb-4 leading-[1.1]">
               {deal.title}
             </h1>
 
             {deal.description && (
-              <p className="text-brand-gray-2 text-sm leading-relaxed mb-6 max-w-3xl">
+              <p className="text-ink-2 text-base leading-relaxed mb-6 max-w-3xl">
                 {deal.description}
               </p>
             )}
 
-            <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6 mb-6">
+            {/* PRICE BLOCK */}
+            <div className="bg-white border border-ink p-6 mb-6">
               <div className="flex flex-wrap items-baseline gap-3 mb-3">
-                <span className="font-heading text-5xl font-900 text-brand-red leading-none">
+                <span className="font-mono text-5xl font-medium text-accent tabular-nums leading-none">
                   {formatPrice(deal.deal_price, deal.country)}
                 </span>
                 {deal.original_price && (
-                  <span className="text-brand-gray text-2xl line-through">
+                  <span className="font-mono text-2xl text-ink-muted line-through tabular-nums">
                     {formatPrice(deal.original_price, deal.country)}
                   </span>
                 )}
                 {discount > 0 && (
-                  <span className="bg-brand-red text-white text-sm font-black px-3 py-1 rounded-md uppercase tracking-wider">
-                    -{discount}% OFF
-                  </span>
+                  <span className="badge-discount">-{discount}%</span>
                 )}
               </div>
               {savings && savings > 0 && (
-                <div className="text-brand-green font-bold mb-3">
+                <div className="text-good text-sm font-medium mb-3">
                   You save {formatPrice(savings, deal.country)}
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mb-4 text-sm">
-                <span className="text-brand-gray text-xs">Price quality:</span>
+              <div className="flex items-center gap-3 mb-5 text-sm">
+                <span className="text-ink-muted text-xs tracking-wider">PRICE QUALITY</span>
                 <div className="flex items-center gap-0.5">
                   {[1,2,3,4,5].map(n => (
-                    <span key={n} className={n <= quality.stars ? '' : 'opacity-20'}
-                          style={{ color: quality.color }}>★</span>
+                    <span key={n} className={n <= quality.stars ? 'text-accent' : 'text-rule'}>★</span>
                   ))}
                 </div>
-                <span className="text-xs font-bold" style={{ color: quality.color }}>
+                <span className="text-xs font-medium text-ink">
                   {quality.label}
                 </span>
               </div>
@@ -236,9 +268,8 @@ export default async function DealPage({ params }: Props) {
 
             {related.length > 0 && (
               <section>
-                <h2 className="font-heading text-2xl font-900 text-white uppercase mb-4">
-                  More {deal.category} Deals
-                </h2>
+                <div className="section-eyebrow mb-2">RELATED</div>
+                <h2 className="section-h2 mb-6">More {deal.category} Deals</h2>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {related.map(d => <DealCard key={d.id} deal={d} />)}
                 </div>
@@ -251,49 +282,85 @@ export default async function DealPage({ params }: Props) {
             {deal.coupon_code && <CouponFeedback dealId={deal.id} couponCode={deal.coupon_code} />}
 
             {deal.retailer_slug && (
-              <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6">
-                <h3 className="text-white font-bold mb-3">🏪 About the Store</h3>
+              <div className="bg-white border border-rule p-6">
+                <div className="section-eyebrow mb-3">ABOUT THE STORE</div>
                 <Link href={`/store/${deal.retailer_slug}`}
-                  className="block text-brand-red hover:text-white text-sm font-bold mb-1">
+                  className="block font-serif text-xl text-ink hover:text-accent mb-1">
                   {deal.retailer_name} →
                 </Link>
-                <p className="text-brand-gray text-xs">
+                <p className="text-ink-2 text-xs">
                   See all current deals from {deal.retailer_name}.
                 </p>
               </div>
             )}
 
-            <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6">
-              <h3 className="text-white font-bold mb-3">📊 Deal Stats</h3>
+            <div className="bg-white border border-rule p-6">
+              <div className="section-eyebrow mb-3">DEAL STATS</div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-brand-gray">Hotness score</span>
-                  <span className="text-white font-mono">{score}/100</span>
+                  <span className="text-ink-muted">Hotness score</span>
+                  <span className="text-ink font-mono">{score}/100</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-brand-gray">Clicks</span>
-                  <span className="text-white font-mono">{deal.click_count || 0}</span>
+                  <span className="text-ink-muted">Clicks</span>
+                  <span className="text-ink font-mono">{deal.click_count || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-brand-gray">Saves</span>
-                  <span className="text-white font-mono">{deal.save_count || 0}</span>
+                  <span className="text-ink-muted">Saves</span>
+                  <span className="text-ink font-mono">{deal.save_count || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-brand-gray">Net votes</span>
-                  <span className="text-white font-mono">
+                  <span className="text-ink-muted">Net votes</span>
+                  <span className="text-ink font-mono">
                     {((deal as any).upvote_count || 0) - ((deal as any).downvote_count || 0)}
                   </span>
                 </div>
                 {deal.expires_at && (
                   <div className="flex justify-between">
-                    <span className="text-brand-gray">Expires</span>
-                    <span className="text-brand-red">{new Date(deal.expires_at).toLocaleDateString()}</span>
+                    <span className="text-ink-muted">Expires</span>
+                    <span className="text-accent">{new Date(deal.expires_at).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>
             </div>
           </aside>
         </div>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+// Soft-404 — looks like a normal page, not a Next.js error.
+function DealUnavailable({ reason, recent }: { reason: 'bad-id' | 'missing'; recent?: Deal[] }) {
+  return (
+    <>
+      <Header />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="section-eyebrow mb-3">404 · DEAL NOT IN TODAY&apos;S EDITION</div>
+        <h1 className="font-serif text-4xl lg:text-5xl font-medium text-ink mb-4 leading-tight">
+          {reason === 'bad-id' ? 'That doesn&apos;t look like a deal.' : 'This deal isn&apos;t available right now.'}
+        </h1>
+        <p className="text-ink-2 mb-8 max-w-xl">
+          {reason === 'bad-id'
+            ? "That URL isn't a valid deal page. Try the homepage for today&apos;s editorial picks."
+            : "This deal has either expired, been pulled, or hasn&apos;t been published yet. Daily.Deals refreshes every six hours — check back soon."}
+        </p>
+
+        <div className="flex flex-wrap gap-3 mb-12">
+          <Link href="/" className="btn-primary">Today&apos;s deals →</Link>
+          <Link href="/deals/hot" className="btn-outline">Browse all daily hot deals</Link>
+        </div>
+
+        {recent && recent.length > 0 && (
+          <div>
+            <div className="section-eyebrow mb-2">WHILE YOU&apos;RE HERE</div>
+            <h2 className="section-h2 mb-6">Today&apos;s top deals</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {recent.map(d => <DealCard key={d.id} deal={d} />)}
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </>
