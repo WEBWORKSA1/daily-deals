@@ -39,11 +39,15 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#dc2626',
+  themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
 }
+
+const SKIMLINKS_ID = process.env.NEXT_PUBLIC_SKIMLINKS_ID
+  || process.env.SKIMLINKS_PUBLISHER_ID
+  || '302790X1790814'
 
 const ORG_SCHEMA = {
   "@context": "https://schema.org",
@@ -76,15 +80,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-        {/* JSON-LD schemas — plain script tags so they're inlined into the HTML for crawlers */}
+        {/* Editorial type system: Newsreader (serif display), DM Sans (body), Barlow Condensed (legacy), JetBrains Mono (numbers) */}
+        <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=DM+Sans:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        {/* JSON-LD schemas */}
         <script type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_SCHEMA) }} />
         <script type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }} />
       </head>
-      <body className="bg-brand-dark text-white font-body antialiased">
+      <body className="bg-paper text-ink font-body antialiased">
         {children}
+        {/*
+          Skimlinks safety net — rewrites any retailer link we didn't already
+          server-side wrap (legacy pages, blog content, footer outbound links).
+          Our primary path is server-side via /api/clicks + buildAffiliateLink,
+          which is ad-blocker proof. This script is the belt+suspenders layer.
+        */}
+        <Script id="skimlinks" strategy="afterInteractive"
+          src={`https://s.skimresources.com/js/${SKIMLINKS_ID}.skimlinks.js`} />
         <Script id="register-sw" strategy="afterInteractive">{`
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
