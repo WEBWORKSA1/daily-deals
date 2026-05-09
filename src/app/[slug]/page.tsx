@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Script from 'next/script'
 import Header from '@/components/layout/Header'
@@ -8,21 +9,18 @@ import { supabase } from '@/lib/db'
 import { Deal } from '@/types'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 3600 // re-render every hour for SEO freshness
+export const revalidate = 3600
 
 interface Props { params: { slug: string } }
 
-// SEO landing page configurations.
-// Each entry: keyword, filter, intro copy, FAQ.
-// These map to high-volume search queries from your strategy.
 const PAGES: Record<string, any> = {
   'best-deals-today': {
     title: 'Best Deals Today',
     h1: 'Best Deals Today',
-    description: "The top deals across the US and Canada — handpicked from 1000+ retailers, refreshed daily. Updated " + new Date().toLocaleDateString(),
+    description: "The top deals across the US and Canada — handpicked from 1000+ retailers, refreshed daily.",
     intro: "Every day we surface the highest-quality discounts, flash sales, and clearance deals so you never miss a price drop. Sorted by our Hotness Score — a 0-100 rating that combines discount depth, popularity, and editorial quality.",
-    filter: { active: true, sort: 'hotness_score', sortDir: 'desc' },
-    keywords: ['best deals today', 'top deals today', 'best deals online', 'today\'s deals'],
+    filter: { sort: 'hotness_score', sortDir: 'desc' },
+    keywords: ['best deals today', 'top deals today', 'best deals online', "today's deals"],
     faq: [
       { q: "How are these deals selected?", a: "Our editors and Hotness Score algorithm combine to surface the highest-quality discounts. Every deal is verified by clicking, vote feedback from users, and price history tracking." },
       { q: "How often are deals updated?", a: "Continuously throughout the day. New deals appear hourly. Expired deals are removed automatically." },
@@ -32,9 +30,9 @@ const PAGES: Record<string, any> = {
   'amazon-deals-today': {
     title: 'Amazon Deals Today',
     h1: "Today's Best Amazon Deals",
-    description: "Amazon's best discounts right now — lightning deals, daily savings, and deep clearance. Updated " + new Date().toLocaleDateString(),
+    description: "Amazon's best discounts right now — lightning deals, daily savings, and deep clearance.",
     intro: "Amazon runs hundreds of lightning deals every day, but most last only a few hours. We track them all in real time and surface the ones with genuine discounts (not fake \"was $X\" prices). Includes Prime-exclusive deals.",
-    filter: { active: true, retailer_slug: 'amazon', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { retailer_slug: 'amazon', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['amazon deals today', 'amazon lightning deals', 'amazon daily deals'],
     faq: [
       { q: "Do I need Amazon Prime?", a: "Most deals are available to anyone, though some lightning deals offer early access to Prime members." },
@@ -44,9 +42,9 @@ const PAGES: Record<string, any> = {
   'best-laptop-deals': {
     title: 'Best Laptop Deals',
     h1: 'Best Laptop Deals — US & Canada',
-    description: "Save hundreds on MacBooks, Dell XPS, Lenovo ThinkPad, HP, and more. Updated " + new Date().toLocaleDateString(),
+    description: "Save hundreds on MacBooks, Dell XPS, Lenovo ThinkPad, HP, and more.",
     intro: "Laptops are one of the biggest purchases most people make. Our editors verify every laptop deal — checking that the discount is real, the model is current, and the seller is reputable. Includes back-to-school, holiday, and clearance pricing.",
-    filter: { active: true, category: 'electronics', search: 'laptop', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { category: 'electronics', search: 'laptop', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['best laptop deals', 'laptop deals today', 'cheap laptops'],
     faq: [
       { q: "How do I know if a laptop deal is real?", a: "Look for the Price Quality rating — 4-5 stars means the price is at or near the lowest we've ever tracked. Avoid deals with 1-2 stars." },
@@ -56,9 +54,9 @@ const PAGES: Record<string, any> = {
   'best-phone-deals': {
     title: 'Best Phone Deals',
     h1: 'Best Phone & Smartphone Deals',
-    description: "iPhone, Samsung Galaxy, Pixel, and unlocked phone deals. Updated " + new Date().toLocaleDateString(),
+    description: "iPhone, Samsung Galaxy, Pixel, and unlocked phone deals.",
     intro: "Smartphone deals are tricky because carrier promotions often hide the true price. We focus on unlocked phones with transparent discounts so you can compare apples to apples.",
-    filter: { active: true, category: 'electronics', search: 'phone', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { category: 'electronics', search: 'phone', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['best phone deals', 'iphone deals today', 'smartphone deals'],
     faq: [
       { q: "Should I buy unlocked or carrier?", a: "Unlocked phones give you flexibility and resale value. Carrier deals can save more upfront but lock you in." },
@@ -67,9 +65,9 @@ const PAGES: Record<string, any> = {
   'best-tv-deals': {
     title: 'Best TV Deals',
     h1: 'Best TV Deals — 4K, OLED, QLED',
-    description: "Save on Samsung, LG, Sony, TCL, and Hisense TVs. Updated " + new Date().toLocaleDateString(),
+    description: "Save on Samsung, LG, Sony, TCL, and Hisense TVs.",
     intro: "TV pricing is brutal — manufacturers refresh models annually and inflate MSRPs. Our editors track real street prices to make sure your discount is genuine.",
-    filter: { active: true, category: 'electronics', search: 'tv', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { category: 'electronics', search: 'tv', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['best tv deals', 'tv deals today', '4k tv sale'],
     faq: [
       { q: "When are TVs cheapest?", a: "Black Friday week and Super Bowl week (mid-January) consistently produce the lowest prices of the year." },
@@ -78,9 +76,9 @@ const PAGES: Record<string, any> = {
   'best-gaming-deals': {
     title: 'Best Gaming Deals',
     h1: 'Best Gaming Deals — Consoles, Games, Accessories',
-    description: "PlayStation 5, Xbox, Nintendo Switch, PC games, and accessories. Updated " + new Date().toLocaleDateString(),
+    description: "PlayStation 5, Xbox, Nintendo Switch, PC games, and accessories.",
     intro: "Gaming hardware rarely goes on sale, but accessories, games, and last-gen consoles offer real discounts. Our gaming editor verifies every deal.",
-    filter: { active: true, category: 'gaming', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { category: 'gaming', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['best gaming deals', 'video game deals today'],
     faq: [
       { q: "Are PS5 / Xbox bundles ever discounted?", a: "Yes, but rarely on hardware itself. Most savings come from bundled games or extra controllers." },
@@ -89,27 +87,27 @@ const PAGES: Record<string, any> = {
   'walmart-deals-today': {
     title: 'Walmart Deals Today',
     h1: "Today's Walmart Deals",
-    description: "Best discounts at Walmart right now. Updated " + new Date().toLocaleDateString(),
+    description: "Best discounts at Walmart right now.",
     intro: "Walmart's rollback prices and Black Friday-style flash sales offer real savings on electronics, home goods, and everyday essentials.",
-    filter: { active: true, retailer_slug: 'walmart', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { retailer_slug: 'walmart', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['walmart deals today', 'walmart rollback'],
     faq: [],
   },
   'cheap-gadgets-deals': {
     title: 'Cheap Gadget Deals Under $50',
     h1: 'Cheap Gadgets Under $50',
-    description: "Affordable tech, accessories, and gadgets — all under $50. Updated " + new Date().toLocaleDateString(),
+    description: "Affordable tech, accessories, and gadgets — all under $50.",
     intro: "Great gifts, stocking stuffers, or just everyday upgrades. Hand-picked tech deals where the total price is $50 or less.",
-    filter: { active: true, max_price: 50, category: 'electronics', sort: 'hotness_score', sortDir: 'desc' },
+    filter: { max_price: 50, category: 'electronics', sort: 'hotness_score', sortDir: 'desc' },
     keywords: ['cheap gadgets deals', 'tech under 50'],
     faq: [],
   },
   'black-friday-deals': {
     title: 'Black Friday Deals',
     h1: 'Black Friday Deals — Live Now',
-    description: "The biggest Black Friday sale of the year. Updated " + new Date().toLocaleDateString(),
+    description: "The biggest Black Friday sale of the year.",
     intro: "Black Friday and Cyber Monday produce the lowest prices of the year on most electronics, appliances, and household goods. We track every major retailer's sale and surface the genuine discounts.",
-    filter: { active: true, sort: 'discount_percent', sortDir: 'desc', min_discount: 30 },
+    filter: { sort: 'discount_percent', sortDir: 'desc', min_discount: 30 },
     keywords: ['black friday deals', 'cyber monday deals', 'best black friday deals'],
     faq: [
       { q: "When does Black Friday actually start?", a: "Most retailers start releasing Black Friday deals in early November, with the biggest discounts on Thanksgiving night through Cyber Monday." },
@@ -164,22 +162,10 @@ async function fetchDeals(filter: any): Promise<Deal[]> {
 
 export default async function SEOLandingPage({ params }: Props) {
   const config = PAGES[params.slug]
-  if (!config) {
-    return (
-      <>
-        <Header />
-        <main className="max-w-screen-xl mx-auto px-4 py-20 text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Page not found</h1>
-          <Link href="/" className="text-brand-red hover:underline">← Back to home</Link>
-        </main>
-        <Footer />
-      </>
-    )
-  }
+  if (!config) return notFound()
 
   const deals = await fetchDeals(config.filter)
 
-  // FAQ schema
   const faqSchema = config.faq && config.faq.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -190,7 +176,6 @@ export default async function SEOLandingPage({ params }: Props) {
     })),
   } : null
 
-  // ItemList schema
   const listSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -216,7 +201,6 @@ export default async function SEOLandingPage({ params }: Props) {
       <Header />
       <main>
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {/* Hero */}
           <header className="mb-10 max-w-4xl">
             <div className="text-xs text-brand-gray mb-3">
               <Link href="/" className="hover:text-white">Home</Link>
@@ -226,15 +210,12 @@ export default async function SEOLandingPage({ params }: Props) {
             <h1 className="font-heading text-4xl md:text-5xl font-900 text-white uppercase tracking-tight mb-4">
               {config.h1}
             </h1>
-            <p className="text-brand-gray-2 text-base md:text-lg leading-relaxed">
-              {config.intro}
-            </p>
+            <p className="text-brand-gray-2 text-base md:text-lg leading-relaxed">{config.intro}</p>
             <p className="text-brand-gray text-xs mt-3">
               {deals.length} active deals · Updated {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
           </header>
 
-          {/* Deals grid */}
           {deals.length > 0 ? (
             <section className="mb-12">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -250,7 +231,6 @@ export default async function SEOLandingPage({ params }: Props) {
             </div>
           )}
 
-          {/* FAQ */}
           {config.faq && config.faq.length > 0 && (
             <section className="max-w-4xl">
               <h2 className="font-heading text-2xl md:text-3xl font-900 text-white uppercase mb-6">
@@ -270,7 +250,6 @@ export default async function SEOLandingPage({ params }: Props) {
             </section>
           )}
 
-          {/* Internal linking — boosts SEO */}
           <section className="mt-12 max-w-4xl">
             <h2 className="font-heading text-xl font-900 text-white uppercase mb-4">
               Related Deal Pages
