@@ -1,13 +1,14 @@
-// /admin/scrapers — single-page mission control for the content engine.
+// /admin/scrapers — mission control for the content engine.
 //
-// Buttons in order:
-//   1. Migrate (creates scraped_deals_raw table if missing)
-//   2. Clear seed deals (deactivates placeholder data)
-//   3. Run all scrapers (fires 15 retailers in parallel)
-//   4. Run curator (Claude Haiku judges pending deals)
-//   5. (combined) Run full pipeline
+// AUTH MODEL: This page is protected by CRON_SECRET, NOT by user admin status.
+// The endpoints (/api/scrape/run, /api/curator/run, /api/admin/clear-seed-deals)
+// each verify the secret independently. Anyone visiting this page can see the
+// dashboard chrome, but cannot fire anything without the secret.
 //
-// Also shows: queue counts by status, last 10 raw scrape rows, env-var checklist.
+// Why no admin gate? Because the admin gate creates a chicken-and-egg problem when
+// the site is fresh: you need to sign in to grant yourself admin in Supabase, then
+// re-sign-in to refresh the cookie, then come here. The CRON_SECRET is the actual
+// security boundary — it lives only in Netlify env vars, not in any cookie or session.
 
 'use client'
 import { useState, useEffect } from 'react'
@@ -29,17 +30,28 @@ export default function ScrapersAdminPage() {
   const [busy, setBusy] = useState<string | null>(null)
   const [output, setOutput] = useState<any>(null)
   const [stats, setStats] = useState<Stats | null>(null)
-  const [user, setUser] = useState<any>(null)
   const [secret, setSecret] = useState<string>('')
 
   useEffect(() => {
-    fetch('/api/auth').then(r => r.json()).then(j => setUser(j.user)).catch(() => {})
     refreshStats()
+    // Try restoring secret from sessionStorage (browser-only, never sent to server)
+    try {
+      const saved = sessionStorage.getItem('dd_cron_secret')
+      if (saved) setSecret(saved)
+    } catch {}
   }, [])
+
+  function persistSecret(s: string) {
+    setSecret(s)
+    try { sessionStorage.setItem('dd_cron_secret', s) } catch {}
+  }
 
   async function refreshStats() {
     try {
-      const res = await fetch('/api/admin/scraper-stats')
+      const url = secret
+        ? `/api/admin/scraper-stats?secret=${encodeURIComponent(secret)}`
+        : '/api/admin/scraper-stats'
+      const res = await fetch(url, { headers: { 'x-cron-secret': secret } })
       const json = await res.json()
       if (json.ok) setStats(json)
     } catch {}
@@ -87,39 +99,18 @@ export default function ScrapersAdminPage() {
     refreshStats()
   }
 
-  if (user === null) {
-    return <div className="max-w-4xl mx-auto p-8"><p className="text-ink-2">Loading…</p></div>
-  }
-  if (!user) {
-    return (
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="font-serif text-3xl mb-4">Admin: Scrapers</h1>
-        <p className="text-ink-2">You must be signed in. <a href="/signin" className="underline">Sign in →</a></p>
-      </div>
-    )
-  }
-  if (!user.is_admin) {
-    return (
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="font-serif text-3xl mb-4">Admin: Scrapers</h1>
-        <p className="text-accent">Admin access required. (Your user id: {user.id})</p>
-        <p className="text-ink-muted text-sm mt-2">Run this SQL in Supabase to grant yourself admin: <code className="bg-paper-2 px-2 py-1">UPDATE users SET is_admin = true WHERE id = {user.id};</code></p>
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-5xl mx-auto p-6 lg:p-8">
       <div className="section-eyebrow mb-2">CONTENT ENGINE</div>
       <h1 className="font-serif text-4xl text-ink mb-2">Scrapers</h1>
-      <p className="text-ink-2 mb-8">Fire scrapers, run the curator, watch the queue. The nightly cron fires all of this automatically at 5:00 UTC (midnight EST).</p>
+      <p className="text-ink-2 mb-8">Fire scrapers, run the curator, watch the queue. The scheduled function fires automatically every 6 hours (00:00, 06:00, 12:00, 18:00 UTC).</p>
 
       <div className="bg-paper-2 border border-rule p-4 mb-6">
-        <div className="text-[11px] tracking-[0.15em] text-ink-muted mb-2">CRON_SECRET (paste from Netlify env vars)</div>
-        <input value={secret} onChange={e => setSecret(e.target.value)}
-               type="password" placeholder="dd_…"
+        <div className="text-[11px] tracking-[0.15em] text-ink-muted mb-2">CRON_SECRET</div>
+        <input value={secret} onChange={e => persistSecret(e.target.value)}
+               type="password" placeholder="paste from Netlify env vars"
                className="input-paper" />
-        <p className="text-[11px] text-ink-muted mt-2">Required to call the protected endpoints. Stays in your browser only.</p>
+        <p className="text-[11px] text-ink-muted mt-2">Required to call protected endpoints. Stays in your browser only (sessionStorage). Clears when you close the tab.</p>
       </div>
 
       {stats && (
@@ -144,8 +135,8 @@ export default function ScrapersAdminPage() {
       )}
 
       <div className="space-y-3 mb-8">
-        <button onClick={runFullPipeline} disabled={!!busy}
-                className="btn-accent w-full justify-center text-base py-4">
+        <button onClick={runFullPipeline} disabled={!!busy || !secret}
+                className="btn-accent w-full justify-center text-base py-4 disabled:opacity-40">
           {busy === 'full' ? 'Running full pipeline…' : 'Run full pipeline (clear → scrape → curate)'}
         </button>
 
@@ -153,16 +144,19 @@ export default function ScrapersAdminPage() {
           <button onClick={() => run('migrate', '/api/admin/migrate')} disabled={!!busy} className="btn-outline justify-center">
             {busy === 'migrate' ? '…' : '1. Run migrations'}
           </button>
-          <button onClick={() => run('clear', '/api/admin/clear-seed-deals')} disabled={!!busy} className="btn-outline justify-center">
+          <button onClick={() => run('clear', '/api/admin/clear-seed-deals')} disabled={!!busy || !secret} className="btn-outline justify-center disabled:opacity-40">
             {busy === 'clear' ? '…' : '2. Clear seed deals'}
           </button>
-          <button onClick={() => run('scrape', '/api/scrape/run')} disabled={!!busy} className="btn-outline justify-center">
+          <button onClick={() => run('scrape', '/api/scrape/run')} disabled={!!busy || !secret} className="btn-outline justify-center disabled:opacity-40">
             {busy === 'scrape' ? '…' : '3. Run all scrapers'}
           </button>
-          <button onClick={() => run('curate', '/api/curator/run?limit=200')} disabled={!!busy} className="btn-outline justify-center">
+          <button onClick={() => run('curate', '/api/curator/run?limit=200')} disabled={!!busy || !secret} className="btn-outline justify-center disabled:opacity-40">
             {busy === 'curate' ? '…' : '4. Run curator (Claude Haiku)'}
           </button>
         </div>
+        {!secret && (
+          <p className="text-[11px] text-ink-muted text-center">Paste CRON_SECRET above to enable protected actions.</p>
+        )}
       </div>
 
       {output && (

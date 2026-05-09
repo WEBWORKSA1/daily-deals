@@ -1,13 +1,14 @@
-// Nightly scrape + curate cron — runs at 5:00 UTC = 00:00 EST = midnight Eastern.
+// Scrape + curate cron — runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC).
+//
+// We dropped from "daily at 5:00 UTC" to "every 6 hours" so:
+//   1. Worst-case wait between content drops is 6 hours instead of 24
+//   2. Self-healing kicks in faster if the morning run fails
+//   3. The site feels more alive than a once-per-day refresh
 //
 // Pipeline:
 //   1. POST /api/scrape/run         — hit all 15 retailer scrapers
-//   2. Wait briefly for raw deals to settle
-//   3. POST /api/curator/run        — Claude Haiku judges each one
-//   4. Log results
-//
-// This replaces the placeholder "AI Scout" RSS approach for daily ingestion.
-// The hourly cron still runs for incremental tasks (hotness, expiry, alerts).
+//   2. POST /api/curator/run        — Claude Haiku judges each one
+//   3. Log results to Netlify function logs
 
 import type { Config } from '@netlify/functions'
 
@@ -34,21 +35,19 @@ async function ping(path: string, timeoutMs = 290_000): Promise<{ ok: boolean; s
 
 export default async (req: Request) => {
   const startedAt = Date.now()
-  console.log('Nightly scrape + curate starting at', new Date().toISOString())
+  console.log('Scrape + curate cron starting at', new Date().toISOString())
 
-  // 1. Scrape all retailers
   const scrapeResult = await ping('/api/scrape/run')
   console.log('Scrape result:', JSON.stringify(scrapeResult.body || scrapeResult, null, 2))
 
-  // 2. Curate the queue (process up to 200 at a time per cron run)
   const curateResult = await ping('/api/curator/run?limit=200')
   console.log('Curate result:', JSON.stringify(curateResult.body || curateResult, null, 2))
 
-  console.log('Nightly cron complete in', Math.round((Date.now() - startedAt) / 1000), 'sec')
+  console.log('Scrape cron complete in', Math.round((Date.now() - startedAt) / 1000), 'sec')
 }
 
 export const config: Config = {
-  // 5:00 UTC = 00:00 EST (during EST/winter) = 01:00 EDT (summer)
-  // Close enough to "midnight Eastern" year-round.
-  schedule: '0 5 * * *',
+  // Every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC.
+  // Includes 04:00 EST (~midnight Eastern) every day plus three other refreshes.
+  schedule: '0 */6 * * *',
 }

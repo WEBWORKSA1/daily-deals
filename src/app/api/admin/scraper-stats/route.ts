@@ -1,19 +1,25 @@
 // /api/admin/scraper-stats — read-only stats for the scraper dashboard.
 //
-// Returns: queue counts by status, breakdown per retailer, last 10 raw rows.
-// Auth: must be signed in as is_admin user.
+// AUTH: CRON_SECRET via header or query string. Same pattern as /api/scrape/run
+// and /api/curator/run — the secret is the security boundary, not user admin status.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/db'
-import { getUserFromRequest } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+function authorized(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return true  // dev mode
+  return req.headers.get('x-cron-secret') === secret
+    || req.nextUrl.searchParams.get('secret') === secret
+}
+
 export async function GET(req: NextRequest) {
-  const user = await getUserFromRequest(req).catch(() => null)
-  if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
-  if (!user.is_admin) return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 })
+  if (!authorized(req)) {
+    return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 })
+  }
 
   // Counts by status
   const statuses = ['pending', 'published', 'rejected', 'error']
@@ -27,7 +33,7 @@ export async function GET(req: NextRequest) {
     else counts[s] = count || 0
   }
 
-  // Per-retailer counts (last 7 days, all statuses combined for visibility)
+  // Per-retailer counts (last 7 days)
   const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString()
   const { data: byRetailer } = await supabase
     .from('scraped_deals_raw')

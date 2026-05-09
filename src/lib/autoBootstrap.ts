@@ -1,5 +1,11 @@
 // Auto-bootstrap: ensures database is migrated, seeded, hotness scored, and price history seeded.
 // Safe to call on every request — uses a cached flag and idempotent operations.
+//
+// NEW IN THIS VERSION:
+//   - Self-healing scrape: if the deals table is empty AND ANTHROPIC_API_KEY is set,
+//     fire the scrape+curate pipeline in the background on cold start. Runs once per
+//     server-instance lifetime, so a homepage hit on a freshly-deployed Netlify
+//     instance auto-populates real deals without anyone clicking a button.
 
 import { supabase } from './db'
 import { runManagementSQL, MIGRATIONS } from './managementSQL'
@@ -10,6 +16,7 @@ import { computeHotness } from './hotness'
 let bootstrapPromise: Promise<{ ok: boolean, log: any[] }> | null = null
 let bootstrapCompleted = false
 let lastHotnessUpdate = 0
+let pipelineFired = false  // Per-instance flag — fires once on first cold start
 const HOTNESS_TTL = 15 * 60 * 1000 // 15 min
 
 export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
@@ -17,6 +24,11 @@ export function ensureBootstrapped(): Promise<{ ok: boolean, log: any[] }> {
     if (Date.now() - lastHotnessUpdate > HOTNESS_TTL) {
       lastHotnessUpdate = Date.now()
       recomputeHotness().catch(() => {})
+    }
+    // Self-healing: if deals are empty and we haven't fired yet this instance, kick it off
+    if (!pipelineFired) {
+      pipelineFired = true
+      maybeFirePipeline().catch(() => {})
     }
     return Promise.resolve({ ok: true, log: ['cached'] })
   }
@@ -155,7 +167,6 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
         }))
         if (rows.length > 0) {
           await supabase.from('deal_price_history').insert(rows)
-          // Update lowest/highest/avg = current price for all
           for (const d of (allDeals || []) as any[]) {
             await supabase.from('deals').update({
               lowest_price_ever: d.deal_price,
@@ -175,6 +186,13 @@ async function doBootstrap(): Promise<{ ok: boolean, log: any[] }> {
 
     bootstrapCompleted = true
     lastHotnessUpdate = Date.now()
+
+    // Final step: self-healing pipeline kick (background, fire-and-forget)
+    if (!pipelineFired) {
+      pipelineFired = true
+      maybeFirePipeline().catch(() => {})
+    }
+
     return { ok: true, log }
   } catch (e: any) {
     log.push({ step: 'exception', error: e?.message || String(e) })
@@ -206,10 +224,80 @@ async function recomputeHotness(): Promise<{ updated: number, error?: string }> 
   }
 }
 
+// Self-healing pipeline kicker. Runs once per Netlify-instance cold start.
+// Fires the scrape+curate pipeline IF:
+//   1. ANTHROPIC_API_KEY is configured (otherwise curator can't run)
+//   2. The deals table has fewer than 5 active rows (i.e. site is empty/near-empty)
+// This means the first homepage hit after a fresh deploy auto-populates real deals
+// in the background — no admin login, no button click, no waiting for the cron.
+async function maybeFirePipeline(): Promise<void> {
+  try {
+    if (!process.env.ANTHROPIC_API_KEY) return
+
+    const { count: activeDeals } = await supabase
+      .from('deals')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
+
+    if ((activeDeals || 0) >= 5) {
+      console.log('[autoBootstrap] skip pipeline kick: site already has', activeDeals, 'active deals')
+      return
+    }
+
+    const siteUrl = process.env.URL
+      || process.env.NEXT_PUBLIC_SITE_URL
+      || 'https://daily.deals'
+    const cronSecret = process.env.CRON_SECRET || ''
+
+    console.log('[autoBootstrap] firing scrape pipeline at', siteUrl)
+
+    // Fire scrape, then curate. Do not await on the homepage handler.
+    fetch(`${siteUrl}/api/scrape/run`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Cron-Secret': cronSecret,
+      },
+      signal: AbortSignal.timeout(290_000),
+    })
+      .then(r => r.json())
+      .then(scrapeJson => {
+        console.log('[autoBootstrap] scrape complete:', JSON.stringify({
+          total_scraped: scrapeJson?.total_scraped,
+          total_inserted: scrapeJson?.total_inserted,
+          duration: scrapeJson?.duration_seconds,
+        }))
+        return fetch(`${siteUrl}/api/curator/run?limit=200`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Cron-Secret': cronSecret,
+          },
+          signal: AbortSignal.timeout(290_000),
+        })
+      })
+      .then(r => r?.json())
+      .then(curateJson => {
+        console.log('[autoBootstrap] curate complete:', JSON.stringify({
+          judged: curateJson?.judged,
+          published: curateJson?.published,
+          rejected: curateJson?.rejected,
+          errors: curateJson?.errors,
+        }))
+      })
+      .catch(e => {
+        console.error('[autoBootstrap] pipeline error:', e?.message || String(e))
+      })
+  } catch (e: any) {
+    console.error('[autoBootstrap] maybeFirePipeline error:', e?.message)
+  }
+}
+
 export function getBootstrapStatus() {
   return {
     completed: bootstrapCompleted,
     inFlight: !!bootstrapPromise && !bootstrapCompleted,
+    pipelineFired,
     lastHotnessUpdate: lastHotnessUpdate ? new Date(lastHotnessUpdate).toISOString() : null,
   }
 }
