@@ -77,9 +77,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-        <Script id="org-schema" type="application/ld+json" strategy="beforeInteractive"
+        {/* JSON-LD schemas — plain script tags so they're inlined into the HTML for crawlers */}
+        <script type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_SCHEMA) }} />
-        <Script id="website-schema" type="application/ld+json" strategy="beforeInteractive"
+        <script type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }} />
       </head>
       <body className="bg-brand-dark text-white font-body antialiased">
