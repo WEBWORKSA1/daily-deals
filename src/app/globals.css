@@ -2,121 +2,151 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   DAILY.DEALS — EDITORIAL DAYLIGHT WHITE
+   ============================================================ */
+
 @layer base {
   * { box-sizing: border-box; }
-  body {
-    background-color: #0D0D0D;
-    color: #ffffff;
-    font-family: 'DM Sans', sans-serif;
+
+  html {
+    background-color: #FFFFFF;
+    color: #0A0A0A;
   }
-  h1, h2, h3, h4, h5 {
-    font-family: 'Barlow Condensed', sans-serif;
-    letter-spacing: -0.01em;
+
+  body {
+    background-color: #FFFFFF;
+    color: #0A0A0A;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'ss01', 'ss02';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Editorial display headlines = serif. Section titles use the same family. */
+  h1, h2, h3 {
+    font-family: 'Newsreader', 'Playfair Display', Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: #0A0A0A;
+  }
+  h4, h5, h6 {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-weight: 600;
+    color: #0A0A0A;
+  }
+
+  /* Tabular numbers everywhere prices/counts appear */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
 }
 
 @layer components {
 
-  /* BUTTONS */
+  /* ─── BUTTONS ────────────────────────────────────────────── */
   .btn-primary {
-    @apply bg-brand-red hover:bg-brand-red-light text-white font-bold px-5 py-2.5
-           rounded-lg transition-all duration-150 inline-flex items-center gap-2
-           uppercase tracking-wide text-sm;
+    @apply bg-ink text-white hover:bg-accent
+           font-medium px-5 py-2.5 rounded
+           transition-colors duration-150 inline-flex items-center gap-2 text-sm;
+  }
+  .btn-outline {
+    @apply bg-transparent text-ink border border-ink hover:bg-ink hover:text-white
+           font-medium px-5 py-2.5 rounded
+           transition-colors duration-150 inline-flex items-center gap-2 text-sm;
+  }
+  .btn-accent {
+    @apply bg-accent hover:bg-accent-dark text-white
+           font-medium px-5 py-2.5 rounded
+           transition-colors duration-150 inline-flex items-center gap-2 text-sm;
   }
   .btn-ghost {
-    @apply border border-white/20 hover:border-brand-red hover:text-brand-red
-           text-brand-gray-2 font-medium px-4 py-2 rounded-lg transition-all duration-150 text-sm;
+    @apply text-ink-2 hover:text-ink
+           font-medium px-3 py-2 transition-colors text-sm;
   }
 
-  /* DEAL CARD */
+  /* ─── DEAL CARD ──────────────────────────────────────────── */
   .deal-card {
-    @apply bg-brand-dark-3 border border-white/10 rounded-xl overflow-hidden
-           hover:border-brand-red/50 hover:shadow-deal transition-all duration-200
-           flex flex-col;
+    @apply bg-card border border-rule overflow-hidden
+           transition-colors duration-150 flex flex-col;
   }
-  .deal-card:hover { transform: translateY(-2px); }
-
-  /* BADGES */
-  .badge-hot     { @apply bg-brand-red text-white text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider; }
-  .badge-flash   { @apply bg-brand-gold text-black text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider; }
-  .badge-clear   { @apply bg-brand-blue text-white text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider; }
-  .badge-new     { @apply bg-brand-green text-white text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider; }
-
-  /* DISCOUNT PILL */
-  .discount-pill {
-    @apply bg-brand-red/15 border border-brand-red/30 text-brand-red
-           text-sm font-bold px-3 py-1 rounded-full;
+  .deal-card:hover {
+    border-color: #0A0A0A;
   }
 
-  /* SECTION */
-  .section-title {
-    @apply font-heading text-3xl font-extrabold text-white uppercase tracking-tight;
+  /* ─── BADGES (editorial, low chroma) ─────────────────────── */
+  .badge-eyebrow {
+    @apply text-[10px] font-medium tracking-[0.15em] uppercase text-ink-muted;
   }
-  .section-subtitle {
-    @apply text-brand-gray text-sm font-medium;
+  .badge-discount {
+    @apply bg-accent text-white text-[10px] font-medium px-1.5 py-0.5 rounded-sm tracking-wide;
+  }
+  .badge-soft {
+    @apply bg-paper-2 text-ink-2 text-[11px] font-medium px-2 py-0.5 rounded border border-rule;
+  }
+  .badge-good {
+    @apply text-good text-[11px] font-medium;
   }
 
-  /* INPUT */
-  .input-dark {
-    @apply bg-brand-dark-4 border border-white/10 text-white placeholder-brand-gray
-           rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-brand-red
+  /* ─── SECTION HEADER (editorial style) ───────────────────── */
+  .section-eyebrow {
+    @apply text-[11px] tracking-[0.2em] uppercase text-ink-muted;
+  }
+  .section-h2 {
+    @apply font-serif text-2xl sm:text-3xl font-medium tracking-tight text-ink leading-tight;
+  }
+  .section-sub {
+    @apply text-ink-2 text-sm max-w-xl;
+  }
+  .section-divider {
+    @apply border-t border-rule;
+  }
+
+  /* ─── INPUTS ─────────────────────────────────────────────── */
+  .input-paper {
+    @apply bg-white border border-rule text-ink placeholder-ink-faint
+           rounded px-4 py-2.5 text-sm focus:outline-none focus:border-ink
            transition-colors w-full;
   }
 
-  /* STAT PILL */
-  .stat-pill {
-    @apply flex items-center gap-2 bg-brand-dark-4 border border-white/10
-           rounded-full px-4 py-2 text-sm text-brand-gray-2;
+  /* ─── PRICE DISPLAY ──────────────────────────────────────── */
+  .price-now {
+    @apply font-mono text-accent text-xl font-medium tabular-nums leading-none;
   }
+  .price-was {
+    @apply font-mono text-ink-muted text-xs line-through tabular-nums;
+  }
+
+  /* ─── WORDMARK ──────────────────────────────────────────── */
+  .wordmark {
+    font-family: 'Newsreader', 'Playfair Display', Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .wordmark .dot { color: #DC2626; }
 }
 
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #141414; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #E8222A; }
+/* ─── SCROLLBAR (light theme) ──────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #FAFAF9; }
+::-webkit-scrollbar-thumb { background: #E5E2DB; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #B8B5B0; }
 
-/* FLASH TIMER */
-@keyframes pulse-red {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
-}
-.timer-pulse { animation: pulse-red 1.2s ease-in-out infinite; }
-
-/* GRADIENT OVERLAYS */
-.hero-gradient {
-  background: radial-gradient(ellipse at 20% 50%, rgba(232,34,42,0.15) 0%, transparent 60%),
-              radial-gradient(ellipse at 80% 20%, rgba(245,166,35,0.08) 0%, transparent 50%),
-              #0D0D0D;
-}
-
-.card-shine {
-  position: relative;
-  overflow: hidden;
-}
-.card-shine::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -75%;
-  width: 50%;
-  height: 200%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
-  transform: skewX(-20deg);
-  transition: left 0.6s ease;
-}
-.card-shine:hover::after { left: 125%; }
-
-/* FIRE ANIMATION */
-@keyframes flicker {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.8; transform: scale(1.05); }
-}
-.fire-icon { animation: flicker 1.5s ease-in-out infinite; }
-
-/* TICKER */
+/* ─── TICKER (slow, editorial pace) ────────────────────────── */
 @keyframes ticker {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.animate-ticker { animation: ticker 20s linear infinite; }
+.animate-ticker { animation: ticker 40s linear infinite; }
+
+/* Used by some legacy expiring-soon copy — keep but neutralize the red pulse */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+.timer-pulse { animation: pulse-soft 1.6s ease-in-out infinite; color: #DC2626; }
+
+/* Hide ugly scrollbars on horizontal nav strips */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

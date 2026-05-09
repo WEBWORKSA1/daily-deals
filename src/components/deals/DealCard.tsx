@@ -27,12 +27,10 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
     return () => clearInterval(id)
   }, [deal.expires_at])
 
-  // Card click → goes to deal detail page
   function handleCardClick() {
     router.push(`/deal/${deal.id}`)
   }
 
-  // Get Deal button → tracks click, requests cashback link if signed in, opens
   async function handleGetDeal(e: React.MouseEvent) {
     e.stopPropagation()
     if (clicking) return
@@ -40,7 +38,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
     let urlToOpen = deal.affiliate_url
 
-    // Try to get a cashback-tagged URL (silently falls back to plain URL if not signed in)
     try {
       const res = await fetch('/api/cashback', {
         method: 'POST',
@@ -54,7 +51,6 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
       }
     } catch {}
 
-    // Always log the click for analytics
     try {
       await fetch('/api/clicks', {
         method: 'POST',
@@ -114,152 +110,116 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   const netVotes = upvotes - downvotes
 
   return (
-    <div className="deal-card card-shine group cursor-pointer relative" onClick={handleCardClick}>
-      {/* SAVE button */}
+    <div className="deal-card group cursor-pointer relative" onClick={handleCardClick}>
+      {/* SAVE button \u2014 minimal, top-right */}
       <button onClick={handleSave}
-        className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center
-                    backdrop-blur-md transition-all ${
-                      isSaved
-                        ? 'bg-brand-red text-white shadow-glow'
-                        : 'bg-black/60 text-white/80 hover:bg-brand-red/80 hover:text-white'
-                    }`}
+        className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+          isSaved
+            ? 'bg-ink text-white'
+            : 'bg-white/90 text-ink-2 border border-rule hover:bg-ink hover:text-white'
+        }`}
         title={isSaved ? 'Saved' : 'Save deal'}>
-        🔖
+        {isSaved ? '\u2605' : '\u2606'}
       </button>
 
       {/* IMAGE */}
-      <div className="relative bg-brand-dark-4 h-44 overflow-hidden flex-shrink-0">
+      <div className="relative bg-paper-2 aspect-square overflow-hidden flex-shrink-0 border-b border-rule">
         {deal.image_url ? (
           <img src={deal.image_url} alt={deal.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center opacity-20 text-5xl">🛍️</div>
+          <div className="w-full h-full flex items-center justify-center text-ink-muted text-xs tracking-widest">
+            DAILY DEAL
+          </div>
         )}
 
         {discount > 0 && (
-          <div className="absolute top-2 left-2 bg-brand-red text-white text-xs font-black
-                          px-2.5 py-1 rounded-md uppercase tracking-wider shadow-glow">
+          <div className="absolute top-2 left-2 badge-discount">
             -{discount}%
           </div>
         )}
-
-        {tier ? (
-          <div className="absolute top-12 right-2 text-xs font-black uppercase tracking-wider
-                          px-2 py-1 rounded-md shadow-md flex items-center gap-1"
-               style={{ background: tier.color, color: tier.textColor }}>
-            <span>{tier.emoji}</span>
-            <span>{tier.label}</span>
-          </div>
-        ) : (
-          <div className="absolute top-12 right-2">
-            {deal.deal_type === 'flash'     && <span className="badge-flash">⚡ Flash</span>}
-            {deal.deal_type === 'clearance' && <span className="badge-clear">Clearance</span>}
-          </div>
-        )}
-
-        {deal.is_editors_choice && (
-          <div className="absolute top-10 left-2 bg-gradient-to-r from-yellow-500 to-amber-400
-                          text-black text-xs font-black px-2 py-1 rounded-md
-                          uppercase tracking-wider shadow-md flex items-center gap-1">
-            <span>⭐</span><span>Editor's Pick</span>
-          </div>
-        )}
-
-        {(deal.is_verified || (deal.click_count || 0) >= 5) && !deal.is_editors_choice && (
-          <div className="absolute top-10 left-2 bg-brand-green/90 text-white
-                          text-xs font-bold px-2 py-1 rounded-md
-                          flex items-center gap-1 shadow-md">
-            <span>✓</span><span>Verified</span>
-          </div>
-        )}
-
-        {deal.retailer_name && (
-          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm
-                          text-white text-xs font-bold px-2 py-1 rounded-md">
-            {deal.retailer_name}
-          </div>
-        )}
-
-        <div className="absolute bottom-2 right-2 text-base">
-          {deal.country === 'CA' ? '🇨🇦' : '🇺🇸'}
-        </div>
       </div>
 
       {/* CONTENT */}
-      <div className="p-3 flex flex-col flex-1">
-        <h3 className="text-white text-sm font-semibold leading-snug line-clamp-2 mb-3
-                       group-hover:text-brand-red transition-colors">
+      <div className="p-3.5 flex flex-col flex-1">
+        {/* EYEBROW: CATEGORY \u00B7 RETAILER */}
+        <div className="badge-eyebrow mb-2 truncate">
+          {deal.retailer_name || 'RETAILER'}
+        </div>
+
+        <h3 className="text-ink text-sm font-medium leading-snug line-clamp-2 mb-3">
           {deal.title}
         </h3>
 
-        <div className="mt-auto space-y-2">
+        <div className="mt-auto space-y-2.5">
+          {/* PRICE ROW */}
           <div className="flex items-baseline gap-2">
-            <span className="font-heading text-2xl font-900 text-brand-red leading-none">
+            <span className="price-now">
               {formatPrice(deal.deal_price, deal.country)}
             </span>
             {deal.original_price && (
-              <span className="text-brand-gray text-sm line-through">
+              <span className="price-was">
                 {formatPrice(deal.original_price, deal.country)}
               </span>
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            {savings && savings > 0 ? (
-              <span className="text-brand-green text-xs font-bold">
-                Save {formatPrice(savings, deal.country)}
-              </span>
-            ) : <span />}
-            {deal.coupon_code && (
-              <span className="text-brand-gold text-xs font-mono bg-brand-gold/10
-                               border border-brand-gold/30 px-2 py-0.5 rounded tracking-wider">
-                {deal.coupon_code}
-              </span>
-            )}
-          </div>
+          {/* META ROW: SAVINGS + COUPON CODE */}
+          {(savings && savings > 0) || deal.coupon_code ? (
+            <div className="flex items-center justify-between gap-2">
+              {savings && savings > 0 ? (
+                <span className="badge-good">
+                  Save {formatPrice(savings, deal.country)}
+                </span>
+              ) : <span />}
+              {deal.coupon_code && (
+                <span className="text-[10px] font-mono text-ink bg-paper-2 border border-rule px-1.5 py-0.5 rounded">
+                  {deal.coupon_code}
+                </span>
+              )}
+            </div>
+          ) : null}
 
           {timeLeft && (
-            <div className="text-xs text-brand-red timer-pulse font-medium">⏱ Ends in {timeLeft}</div>
+            <div className="text-[11px] text-accent timer-pulse">Ends in {timeLeft}</div>
           )}
 
-          <div className="flex items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-1">
-              <button onClick={e => handleVote(1, e)}
-                className={`px-1.5 py-1 rounded-md text-[11px] font-bold transition-colors ${
-                  userVote === 1 ? 'bg-brand-green text-white' : 'bg-white/5 text-brand-gray hover:bg-white/10'
-                }`}>▲</button>
-              <span className={`font-mono text-xs ${
-                netVotes > 0 ? 'text-brand-green' : netVotes < 0 ? 'text-brand-red' : 'text-brand-gray'
-              }`}>{netVotes > 0 ? `+${netVotes}` : netVotes}</span>
-              <button onClick={e => handleVote(-1, e)}
-                className={`px-1.5 py-1 rounded-md text-[11px] font-bold transition-colors ${
-                  userVote === -1 ? 'bg-brand-red text-white' : 'bg-white/5 text-brand-gray hover:bg-white/10'
-                }`}>▼</button>
-            </div>
-
-            {tier && (
-              <div className="flex items-center gap-1 flex-1 ml-2">
-                <div className="flex-1 h-1 bg-brand-dark-4 rounded-full overflow-hidden">
-                  <div className="h-full transition-all duration-500"
-                       style={{ width: `${score}%`, background: tier.color }} />
-                </div>
-                <span className="text-brand-gray font-mono text-[10px]">{score}</span>
+          {/* VOTE STRIP */}
+          {(upvotes > 0 || downvotes > 0 || tier) && (
+            <div className="flex items-center justify-between gap-2 text-[11px] pt-2 border-t border-rule">
+              <div className="flex items-center gap-1.5">
+                <button onClick={e => handleVote(1, e)}
+                  className={`text-[11px] transition-colors ${userVote === 1 ? 'text-good font-medium' : 'text-ink-muted hover:text-ink'}`}
+                  aria-label="Upvote">\u25B2</button>
+                <span className={`font-mono tabular-nums ${
+                  netVotes > 0 ? 'text-good' : netVotes < 0 ? 'text-accent' : 'text-ink-muted'
+                }`}>{netVotes > 0 ? `+${netVotes}` : netVotes}</span>
+                <button onClick={e => handleVote(-1, e)}
+                  className={`text-[11px] transition-colors ${userVote === -1 ? 'text-accent font-medium' : 'text-ink-muted hover:text-ink'}`}
+                  aria-label="Downvote">\u25BC</button>
               </div>
-            )}
-          </div>
+
+              {tier && (
+                <div className="flex items-center gap-1.5 text-ink-muted">
+                  <span className="font-mono tabular-nums">{score}</span>
+                  <span className="tracking-wider">HOTNESS</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {authError && (
-            <div className="text-brand-red text-[10px] text-center py-1">
-              Sign in to save / vote →
+            <div className="text-accent text-[10px] text-center">
+              Sign in to save / vote \u2192
             </div>
           )}
 
+          {/* GET DEAL \u2014 full-width black button */}
           <button onClick={handleGetDeal} disabled={clicking}
-            className="w-full bg-brand-red/10 hover:bg-brand-red text-brand-red hover:text-white
-                       border border-brand-red/30 hover:border-brand-red
-                       text-xs font-bold uppercase tracking-wider py-2.5 rounded-lg
-                       transition-all duration-150 flex items-center justify-center gap-1.5">
-            {clicking ? 'Opening...' : 'Get Deal →'}
+            className="w-full bg-ink hover:bg-accent text-white
+                       text-xs font-medium py-2.5 rounded
+                       transition-colors duration-150">
+            {clicking ? 'Opening\u2026' : 'Get this deal \u2192'}
           </button>
         </div>
       </div>

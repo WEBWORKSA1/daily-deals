@@ -8,37 +8,29 @@ interface Props {
   deals: Deal[]
   viewAllHref?: string
   highlight?: boolean
+  sectionNumber?: string  // "01", "02", "LOCAL"
 }
 
-export default function DealSection({ title, subtitle, deals, viewAllHref, highlight }: Props) {
+export default function DealSection({ title, subtitle, deals, viewAllHref, highlight, sectionNumber }: Props) {
   if (!deals.length) return null
 
   return (
-    <section className={highlight
-      ? 'bg-brand-gold/5 border border-brand-gold/15 rounded-2xl p-6'
-      : ''}>
-
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className={`w-1 h-8 rounded-full ${highlight ? 'bg-brand-gold' : 'bg-brand-red'}`} />
-          <div>
-            <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="text-brand-gray text-xs mt-0.5">{subtitle}</p>
-            )}
-          </div>
-        </div>
+    <section className={highlight ? 'bg-paper-2 border-y border-rule -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-10' : ''}>
+      {/* EDITORIAL SECTION HEADER */}
+      <div className="flex items-baseline justify-between mb-2">
+        {sectionNumber && (
+          <div className="section-eyebrow">SECTION {sectionNumber}</div>
+        )}
         {viewAllHref && (
-          <Link href={viewAllHref}
-            className="text-brand-gray-2 hover:text-brand-red text-xs font-bold
-                       uppercase tracking-wider transition-colors flex items-center gap-1
-                       border border-white/10 hover:border-brand-red/30 px-3 py-1.5 rounded-lg flex-shrink-0">
-            View All →
+          <Link href={viewAllHref} className="text-xs text-ink hover:text-accent border-b border-ink hover:border-accent pb-px transition-colors">
+            See all \u2192
           </Link>
         )}
       </div>
+
+      <h2 className="section-h2 mb-1">{title}</h2>
+      {subtitle && <p className="section-sub mb-7">{subtitle}</p>}
+      {!subtitle && <div className="mb-7" />}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {deals.map(deal => (

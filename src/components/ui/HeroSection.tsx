@@ -6,100 +6,82 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
   const { location, loading } = useLocation()
 
   return (
-    <section className="relative overflow-hidden bg-brand-dark">
-      {/* GRID PATTERN */}
-      <div className="absolute inset-0 pointer-events-none opacity-5"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)',
-          backgroundSize: '60px 60px'
-        }} />
+    <section className="relative bg-white">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-start">
 
-      {/* RED GLOW */}
-      <div className="absolute -left-40 top-0 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(232,34,42,0.2) 0%, transparent 70%)' }} />
-      <div className="absolute right-0 bottom-0 w-80 h-80 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%)' }} />
-
-      <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-          {/* LEFT — COPY */}
+          {/* LEFT \u2014 EDITORIAL HEADLINE */}
           <div>
-            {/* LOCATION BADGE */}
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10
-                            rounded-full px-4 py-2 text-xs text-brand-gray-2 mb-6">
-              <span className="w-2 h-2 bg-brand-green rounded-full animate-pulse flex-shrink-0" />
-              {loading ? 'Detecting location...' : location
-                ? <span>Deals for <strong className="text-white">{location.city}, {location.stateCode}</strong> {location.country === 'CA' ? '🇨🇦' : '🇺🇸'}</span>
-                : <span>US & Canada deals — updated daily</span>
-              }
+            <div className="section-eyebrow mb-4">
+              {loading ? 'DETECTING LOCATION\u2026' : location
+                ? `EDITION FOR ${location.city.toUpperCase()}, ${location.stateCode}`
+                : 'NORTH AMERICAN EDITION'}
             </div>
 
-            {/* HEADLINE — brand promise */}
-            <h1 className="font-heading font-900 uppercase leading-[0.9] tracking-tight mb-6">
-              <span className="block text-6xl sm:text-7xl lg:text-8xl text-white">Daily Deals.</span>
-              <span className="block text-6xl sm:text-7xl lg:text-8xl text-brand-red">Every Day.</span>
+            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-medium leading-[0.95] tracking-[-0.025em] text-ink mb-5">
+              Daily Deals.<br />
+              <span className="text-accent">Every Day.</span>
             </h1>
 
-            <p className="text-brand-gray-2 text-lg leading-relaxed mb-8 max-w-lg">
-              Handpicked discounts from 1,000+ retailers across the US and Canada.
-              Updated every 24 hours. Always free.
+            <p className="text-ink-2 text-base lg:text-lg leading-relaxed max-w-xl mb-7">
+              Hand-picked discounts from 1,000+ retailers across the US and Canada. Verified by editors. Updated every 24 hours. Always free.
             </p>
 
-            {/* STATS ROW */}
-            <div className="flex flex-wrap gap-3 mb-8">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
-                <span className="text-brand-red font-black text-lg">{totalDeals > 0 ? totalDeals : '40'}+</span>
-                <span className="text-brand-gray text-xs">deals today</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
-                <span className="text-brand-gold font-black text-lg">1,000+</span>
-                <span className="text-brand-gray text-xs">retailers</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
-                <span className="text-brand-green font-black text-lg">Up to 70%</span>
-                <span className="text-brand-gray text-xs">off</span>
-              </div>
-            </div>
-
-            {/* CTA BUTTONS */}
-            <div className="flex flex-wrap gap-3">
-              <Link href="/deals/today" className="btn-primary px-8 py-4 text-base">
-                Browse Deals →
-              </Link>
-              <Link href="/deals/flash"
-                className="flex items-center gap-2 bg-brand-gold/10 hover:bg-brand-gold/20
-                           border border-brand-gold/30 text-brand-gold font-bold
-                           px-6 py-4 rounded-lg transition-all text-sm uppercase tracking-wider">
-                ⚡ Flash Deals
-              </Link>
-            </div>
-          </div>
-
-          {/* RIGHT — CATEGORY GRID */}
-          <div className="hidden lg:grid grid-cols-2 gap-3">
-            {[
-              { icon: '💻', label: 'Electronics', slug: 'electronics', color: '#3B82F6' },
-              { icon: '👗', label: 'Fashion', slug: 'fashion', color: '#EC4899' },
-              { icon: '🏠', label: 'Home', slug: 'home-kitchen', color: '#F59E0B' },
-              { icon: '⚽', label: 'Sports', slug: 'sports-outdoors', color: '#22C55E' },
-              { icon: '💄', label: 'Beauty', slug: 'beauty', color: '#A855F7' },
-              { icon: '🎮', label: 'Gaming', slug: 'gaming', color: '#E8222A' },
-            ].map(cat => (
-              <Link key={cat.slug} href={`/category/${cat.slug}`}
-                className="flex items-center gap-3 bg-brand-dark-3 border border-white/10
-                           hover:border-white/25 rounded-xl p-4 group transition-all">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ backgroundColor: cat.color + '20', border: `1px solid ${cat.color}30` }}>
-                  {cat.icon}
+            {/* STATS ROW \u2014 newspaper rule lines, mono numbers */}
+            <div className="grid grid-cols-3 gap-6 py-5 border-t border-b border-rule mb-7 max-w-lg">
+              <div>
+                <div className="font-mono text-2xl font-medium text-ink tabular-nums leading-none">
+                  {totalDeals > 0 ? totalDeals : '128'}
                 </div>
-                <span className="text-brand-gray-2 group-hover:text-white text-sm font-medium transition-colors">
-                  {cat.label}
-                </span>
-                <span className="ml-auto text-brand-gray text-xs">→</span>
+                <div className="text-[10px] tracking-[0.15em] text-ink-muted mt-1.5">LIVE TODAY</div>
+              </div>
+              <div>
+                <div className="font-mono text-2xl font-medium text-ink tabular-nums leading-none">43,140</div>
+                <div className="text-[10px] tracking-[0.15em] text-ink-muted mt-1.5">ZIPS COVERED</div>
+              </div>
+              <div>
+                <div className="font-mono text-2xl font-medium text-ink tabular-nums leading-none">1,000+</div>
+                <div className="text-[10px] tracking-[0.15em] text-ink-muted mt-1.5">RETAILERS</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link href="/deals/today" className="btn-primary">
+                Browse all deals \u2192
               </Link>
-            ))}
+              <Link href="/deals/flash" className="btn-outline">
+                Daily Flash Deals
+              </Link>
+            </div>
           </div>
+
+          {/* RIGHT \u2014 FEATURED DAILY DEAL CARD (magazine-cover slot) */}
+          <div className="bg-white border border-ink p-6 lg:p-7">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="w-1.5 h-1.5 bg-accent rounded-full" aria-hidden />
+              <span className="text-[11px] tracking-[0.2em] text-accent font-medium">FEATURED DAILY DEAL</span>
+            </div>
+
+            <div className="bg-paper-2 border border-rule h-44 sm:h-56 mb-5 flex items-center justify-center text-ink-muted">
+              <span className="text-xs tracking-widest">FEATURED PRODUCT</span>
+            </div>
+
+            <div className="badge-eyebrow mb-2">ELECTRONICS \u00B7 AMAZON</div>
+            <h2 className="font-serif text-xl sm:text-2xl font-medium leading-tight text-ink mb-4">
+              Sony WH-1000XM5 Wireless Noise-Cancelling Headphones
+            </h2>
+
+            <div className="flex items-baseline gap-3 mb-5">
+              <span className="font-mono text-3xl font-medium text-accent tabular-nums leading-none">$299</span>
+              <span className="font-mono text-base text-ink-muted line-through tabular-nums">$399</span>
+              <span className="badge-discount">-25%</span>
+            </div>
+
+            <Link href="/deals/today" className="btn-primary w-full justify-center">
+              Get this deal \u2192
+            </Link>
+          </div>
+
         </div>
       </div>
     </section>
