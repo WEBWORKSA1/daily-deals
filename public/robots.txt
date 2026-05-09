@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /signin
+Disallow: /account
+
+# Block any noisy bots that don't bring traffic
+User-agent: AhrefsBot
+Crawl-delay: 30
+User-agent: SemrushBot
+Crawl-delay: 30
+User-agent: DotBot
+Disallow: /
+
+Sitemap: https://daily.deals/sitemap.xml
