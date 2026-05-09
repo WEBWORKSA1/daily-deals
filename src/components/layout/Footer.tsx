@@ -4,15 +4,15 @@ export default function Footer() {
   const year = new Date().getFullYear()
   return (
     <>
-      {/* NEWSLETTER BLOCK \u2014 high contrast editorial close */}
+      {/* NEWSLETTER BLOCK — high contrast editorial close */}
       <section className="bg-ink text-white">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-          <div className="text-[11px] tracking-[0.25em] text-ink-muted mb-3">THE DAILY DEAL \u00B7 DELIVERED</div>
+          <div className="text-[11px] tracking-[0.25em] text-ink-muted mb-3">THE DAILY DEAL · DELIVERED</div>
           <h2 className="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-white mb-3">
             Daily Deals. In your inbox.
           </h2>
           <p className="text-sm text-ink-faint max-w-md mx-auto mb-6">
-            One email each morning. The day\u2019s best deals, hand-picked. Free.
+            One email each morning. The day’s best deals, hand-picked. Free.
           </p>
           <form className="flex justify-center gap-2 max-w-md mx-auto">
             <input type="email" placeholder="you@email.com"
@@ -50,8 +50,8 @@ export default function Footer() {
             <div>
               <div className="section-eyebrow mb-4">CATEGORIES</div>
               <ul className="space-y-2.5">
-                {[['Electronics','/category/electronics'],['Fashion','/category/fashion'],['Home &amp; Kitchen','/category/home-kitchen'],['Sports','/category/sports-outdoors'],['Gaming','/category/gaming'],['Beauty','/category/beauty']].map(([label,href])=>(
-                  <li key={href}><Link href={href as string} className="text-ink-2 hover:text-ink text-sm transition-colors" dangerouslySetInnerHTML={{__html: label as string}} /></li>
+                {[['Electronics','/category/electronics'],['Fashion','/category/fashion'],['Home & Kitchen','/category/home-kitchen'],['Sports','/category/sports-outdoors'],['Gaming','/category/gaming'],['Beauty','/category/beauty']].map(([label,href])=>(
+                  <li key={href}><Link href={href as string} className="text-ink-2 hover:text-ink text-sm transition-colors">{label}</Link></li>
                 ))}
               </ul>
             </div>
@@ -67,7 +67,7 @@ export default function Footer() {
         </div>
         <div className="border-t border-rule">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-ink-muted text-xs">\u00A9 {year} Daily.Deals \u2014 All rights reserved.</p>
+            <p className="text-ink-muted text-xs">© {year} Daily.Deals — All rights reserved.</p>
             <p className="text-ink-muted text-xs text-center">
               We may earn affiliate commissions when you click on deals.{' '}
               <Link href="/disclosure" className="text-ink hover:underline">Disclosure</Link>

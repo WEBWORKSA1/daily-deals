@@ -9,6 +9,7 @@ function formatToday() {
   const d = new Date()
   const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']
   const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER']
+  // \u00B7 = middle dot — here it's a JS string literal, so the escape resolves correctly.
   return `${days[d.getDay()]} \u00B7 ${months[d.getMonth()]} ${d.getDate()} \u00B7 ${d.getFullYear()}`
 }
 
@@ -47,7 +48,7 @@ export default function Header() {
       <div className="bg-white border-b border-rule">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between">
           <span className="text-[11px] tracking-[0.2em] text-ink-muted">{today || '\u00A0'}</span>
-          <span className="text-[11px] tracking-[0.15em] text-ink-muted">DAILY EDITION \u2014 US &amp; CANADA</span>
+          <span className="text-[11px] tracking-[0.15em] text-ink-muted">DAILY EDITION — US &amp; CANADA</span>
         </div>
       </div>
 
@@ -74,9 +75,9 @@ export default function Header() {
                 className="flex items-center gap-1.5 text-ink-2 hover:text-ink
                            text-xs font-medium transition-colors"
               >
-                <span aria-hidden>\u25CE</span>
+                <span aria-hidden>◎</span>
                 <span className="max-w-[140px] truncate">
-                  {loading ? 'Detecting\u2026' : location ? `${location.city}, ${location.stateCode}` : 'Set your location'}
+                  {loading ? 'Detecting…' : location ? `${location.city}, ${location.stateCode}` : 'Set your location'}
                 </span>
               </button>
 
@@ -88,7 +89,7 @@ export default function Header() {
                                text-xs font-medium transition-colors"
                   >
                     <span className="max-w-[100px] truncate">{user.username || user.email.split('@')[0]}</span>
-                    <span aria-hidden className="text-[10px]">\u25BE</span>
+                    <span aria-hidden className="text-[10px]">▾</span>
                   </button>
 
                   {showAccountMenu && (
@@ -102,6 +103,7 @@ export default function Header() {
                         <Link href="/extension" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-ink hover:bg-paper-2 border-b border-rule">Browser Extension</Link>
                         {user.is_admin && (
                           <>
+                            <Link href="/admin/scrapers" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-accent hover:bg-paper-2 border-b border-rule">Scrapers (Admin)</Link>
                             <Link href="/admin/scout" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-accent hover:bg-paper-2 border-b border-rule">AI Scout (Admin)</Link>
                             <Link href="/admin/moderation" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-accent hover:bg-paper-2 border-b border-rule">Moderation (Admin)</Link>
                           </>
@@ -118,7 +120,7 @@ export default function Header() {
               )}
 
               <Link href="/deals/hot" className="btn-primary hidden sm:inline-flex">
-                Browse deals \u2192
+                Browse deals →
               </Link>
             </div>
           </div>
@@ -161,7 +163,7 @@ export default function Header() {
                 placeholder="ZIP code or postal code"
                 className="input-paper flex-1" autoFocus />
               <button type="submit" disabled={saving} className="btn-primary px-5">
-                {saving ? '\u2026' : 'Go'}
+                {saving ? '…' : 'Go'}
               </button>
             </form>
             {error && <p className="text-accent text-xs mb-2">{error}</p>}

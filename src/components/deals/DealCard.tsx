@@ -111,7 +111,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
   return (
     <div className="deal-card group cursor-pointer relative" onClick={handleCardClick}>
-      {/* SAVE button \u2014 minimal, top-right */}
+      {/* SAVE button — minimal, top-right */}
       <button onClick={handleSave}
         className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
           isSaved
@@ -119,7 +119,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             : 'bg-white/90 text-ink-2 border border-rule hover:bg-ink hover:text-white'
         }`}
         title={isSaved ? 'Saved' : 'Save deal'}>
-        {isSaved ? '\u2605' : '\u2606'}
+        {isSaved ? '★' : '☆'}
       </button>
 
       {/* IMAGE */}
@@ -142,7 +142,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
       {/* CONTENT */}
       <div className="p-3.5 flex flex-col flex-1">
-        {/* EYEBROW: CATEGORY \u00B7 RETAILER */}
+        {/* EYEBROW: CATEGORY · RETAILER */}
         <div className="badge-eyebrow mb-2 truncate">
           {deal.retailer_name || 'RETAILER'}
         </div>
@@ -190,13 +190,13 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
               <div className="flex items-center gap-1.5">
                 <button onClick={e => handleVote(1, e)}
                   className={`text-[11px] transition-colors ${userVote === 1 ? 'text-good font-medium' : 'text-ink-muted hover:text-ink'}`}
-                  aria-label="Upvote">\u25B2</button>
+                  aria-label="Upvote">▲</button>
                 <span className={`font-mono tabular-nums ${
                   netVotes > 0 ? 'text-good' : netVotes < 0 ? 'text-accent' : 'text-ink-muted'
                 }`}>{netVotes > 0 ? `+${netVotes}` : netVotes}</span>
                 <button onClick={e => handleVote(-1, e)}
                   className={`text-[11px] transition-colors ${userVote === -1 ? 'text-accent font-medium' : 'text-ink-muted hover:text-ink'}`}
-                  aria-label="Downvote">\u25BC</button>
+                  aria-label="Downvote">▼</button>
               </div>
 
               {tier && (
@@ -210,16 +210,16 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
           {authError && (
             <div className="text-accent text-[10px] text-center">
-              Sign in to save / vote \u2192
+              Sign in to save / vote →
             </div>
           )}
 
-          {/* GET DEAL \u2014 full-width black button */}
+          {/* GET DEAL — full-width black button */}
           <button onClick={handleGetDeal} disabled={clicking}
             className="w-full bg-ink hover:bg-accent text-white
                        text-xs font-medium py-2.5 rounded
                        transition-colors duration-150">
-            {clicking ? 'Opening\u2026' : 'Get this deal \u2192'}
+            {clicking ? 'Opening…' : 'Get this deal →'}
           </button>
         </div>
       </div>

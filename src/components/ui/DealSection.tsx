@@ -23,7 +23,7 @@ export default function DealSection({ title, subtitle, deals, viewAllHref, highl
         )}
         {viewAllHref && (
           <Link href={viewAllHref} className="text-xs text-ink hover:text-accent border-b border-ink hover:border-accent pb-px transition-colors">
-            See all \u2192
+            See all →
           </Link>
         )}
       </div>

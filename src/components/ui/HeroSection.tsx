@@ -10,10 +10,10 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-start">
 
-          {/* LEFT \u2014 EDITORIAL HEADLINE */}
+          {/* LEFT — EDITORIAL HEADLINE */}
           <div>
             <div className="section-eyebrow mb-4">
-              {loading ? 'DETECTING LOCATION\u2026' : location
+              {loading ? 'DETECTING LOCATION…' : location
                 ? `EDITION FOR ${location.city.toUpperCase()}, ${location.stateCode}`
                 : 'NORTH AMERICAN EDITION'}
             </div>
@@ -27,7 +27,7 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
               Hand-picked discounts from 1,000+ retailers across the US and Canada. Verified by editors. Updated every 24 hours. Always free.
             </p>
 
-            {/* STATS ROW \u2014 newspaper rule lines, mono numbers */}
+            {/* STATS ROW — newspaper rule lines, mono numbers */}
             <div className="grid grid-cols-3 gap-6 py-5 border-t border-b border-rule mb-7 max-w-lg">
               <div>
                 <div className="font-mono text-2xl font-medium text-ink tabular-nums leading-none">
@@ -47,7 +47,7 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
 
             <div className="flex flex-wrap gap-3">
               <Link href="/deals/today" className="btn-primary">
-                Browse all deals \u2192
+                Browse all deals →
               </Link>
               <Link href="/deals/flash" className="btn-outline">
                 Daily Flash Deals
@@ -55,7 +55,7 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
             </div>
           </div>
 
-          {/* RIGHT \u2014 FEATURED DAILY DEAL CARD (magazine-cover slot) */}
+          {/* RIGHT — FEATURED DAILY DEAL CARD (magazine-cover slot) */}
           <div className="bg-white border border-ink p-6 lg:p-7">
             <div className="flex items-center gap-2 mb-5">
               <span className="w-1.5 h-1.5 bg-accent rounded-full" aria-hidden />
@@ -66,7 +66,7 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
               <span className="text-xs tracking-widest">FEATURED PRODUCT</span>
             </div>
 
-            <div className="badge-eyebrow mb-2">ELECTRONICS \u00B7 AMAZON</div>
+            <div className="badge-eyebrow mb-2">ELECTRONICS · AMAZON</div>
             <h2 className="font-serif text-xl sm:text-2xl font-medium leading-tight text-ink mb-4">
               Sony WH-1000XM5 Wireless Noise-Cancelling Headphones
             </h2>
@@ -78,7 +78,7 @@ export default function HeroSection({ totalDeals }: { totalDeals: number }) {
             </div>
 
             <Link href="/deals/today" className="btn-primary w-full justify-center">
-              Get this deal \u2192
+              Get this deal →
             </Link>
           </div>
 
