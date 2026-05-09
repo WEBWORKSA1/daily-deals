@@ -11,6 +11,7 @@ import DealSection from '@/components/ui/DealSection'
 import FeaturedDeal from '@/components/ui/FeaturedDeal'
 import DealTicker from '@/components/ui/DealTicker'
 import LocalDealsSection from '@/components/ui/LocalDealsSection'
+import InstallPrompt from '@/components/ui/InstallPrompt'
 
 export const metadata: Metadata = {
   title: 'Daily.Deals — Best Deals Today | US & Canada',
@@ -233,6 +234,7 @@ export default async function HomePage() {
         </div>
       </main>
       <Footer />
+      <InstallPrompt />
     </>
   )
 }
