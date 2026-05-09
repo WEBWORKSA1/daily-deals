@@ -8,8 +8,9 @@ import DealCard from '@/components/deals/DealCard'
 import { supabase } from '@/lib/db'
 import { Deal } from '@/types'
 
-export const dynamic = 'force-dynamic'
+// ISR: regenerate every hour. Compatible with generateStaticParams.
 export const revalidate = 3600
+export const dynamicParams = false
 
 interface Props { params: { slug: string } }
 
@@ -137,27 +138,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 async function fetchDeals(filter: any): Promise<Deal[]> {
-  let q = supabase
-    .from('deals')
-    .select('*, retailers!inner(name, slug, brand_color, affiliate_net)')
-    .eq('is_active', true)
-    .limit(40)
+  try {
+    let q = supabase
+      .from('deals')
+      .select('*, retailers!inner(name, slug, brand_color, affiliate_net)')
+      .eq('is_active', true)
+      .limit(40)
 
-  if (filter.retailer_slug) q = q.eq('retailers.slug', filter.retailer_slug)
-  if (filter.category) q = q.eq('category', filter.category)
-  if (filter.search) q = q.ilike('title', `%${filter.search}%`)
-  if (filter.max_price) q = q.lte('deal_price', filter.max_price)
-  if (filter.min_discount) q = q.gte('discount_percent', filter.min_discount)
-  if (filter.sort) q = q.order(filter.sort, { ascending: filter.sortDir !== 'desc' })
+    if (filter.retailer_slug) q = q.eq('retailers.slug', filter.retailer_slug)
+    if (filter.category) q = q.eq('category', filter.category)
+    if (filter.search) q = q.ilike('title', `%${filter.search}%`)
+    if (filter.max_price) q = q.lte('deal_price', filter.max_price)
+    if (filter.min_discount) q = q.gte('discount_percent', filter.min_discount)
+    if (filter.sort) q = q.order(filter.sort, { ascending: filter.sortDir !== 'desc' })
 
-  const { data } = await q
-  return (data || []).map((d: any) => ({
-    ...d,
-    retailer_name: d.retailers?.name,
-    retailer_slug: d.retailers?.slug,
-    retailer_brand_color: d.retailers?.brand_color,
-    affiliate_net: d.retailers?.affiliate_net,
-  }))
+    const { data } = await q
+    return (data || []).map((d: any) => ({
+      ...d,
+      retailer_name: d.retailers?.name,
+      retailer_slug: d.retailers?.slug,
+      retailer_brand_color: d.retailers?.brand_color,
+      affiliate_net: d.retailers?.affiliate_net,
+    }))
+  } catch {
+    return []
+  }
 }
 
 export default async function SEOLandingPage({ params }: Props) {
