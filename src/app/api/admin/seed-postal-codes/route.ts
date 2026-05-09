@@ -23,7 +23,7 @@ import { supabase } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-export const maxDuration = 300 // up to 5 minutes for the seed
+export const maxDuration = 300
 
 interface PostalRow {
   code: string
@@ -38,37 +38,51 @@ interface PostalRow {
 
 function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
-  // No secret configured = dev mode = allow
   if (!secret) return true
   return req.headers.get('x-cron-secret') === secret
     || req.nextUrl.searchParams.get('secret') === secret
 }
 
-// Fetch + unzip + parse a GeoNames country file.
-// Returns deduplicated rows (one row per postal code — GeoNames sometimes has
-// multiple rows per code for different cities; we keep the first one).
+// Clean a place name from GeoNames.
+// Some Canadian entries look like:  "Saint John (Lower West, Greendale, ...)"
+// or "Toronto (St. James Town / Cabbagetown / Regent Park)"
+// We want the canonical city name only: "Saint John" / "Toronto".
+function cleanPlaceName(raw: string): string {
+  if (!raw) return ''
+  let s = raw.trim()
+  // Strip parentheticals
+  const parenIdx = s.indexOf('(')
+  if (parenIdx > 0) s = s.substring(0, parenIdx).trim()
+  // Strip everything after a slash (multi-neighbourhood listings)
+  const slashIdx = s.indexOf('/')
+  if (slashIdx > 0) s = s.substring(0, slashIdx).trim()
+  // Strip everything after first comma (sometimes "City, Region, Other")
+  const commaIdx = s.indexOf(',')
+  if (commaIdx > 0) s = s.substring(0, commaIdx).trim()
+  return s.substring(0, 80) // hard cap regardless
+}
+
+function safeTruncate(s: string, max: number): string {
+  if (!s) return ''
+  return s.length > max ? s.substring(0, max) : s
+}
+
 async function fetchGeoNamesCountry(country: 'US' | 'CA'): Promise<PostalRow[]> {
   const url = `https://download.geonames.org/export/zip/${country}.zip`
 
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Daily.Deals/1.0 (postal seeder)' },
-    // GeoNames is reliable but slow — give it 2 minutes
     signal: AbortSignal.timeout(120_000),
   })
-  if (!res.ok) {
-    throw new Error(`GeoNames ${country} returned ${res.status}`)
-  }
+  if (!res.ok) throw new Error(`GeoNames ${country} returned ${res.status}`)
 
   const arrayBuffer = await res.arrayBuffer()
   const zip = await JSZip.loadAsync(arrayBuffer)
 
-  // The archive contains one .txt file (e.g. US.txt) plus a readme.
   const txtFile = Object.values(zip.files).find(
     (f: any) => !f.dir && f.name.toLowerCase().endsWith('.txt') && !f.name.toLowerCase().includes('readme')
   )
-  if (!txtFile) {
-    throw new Error(`No .txt file found in GeoNames ${country}.zip`)
-  }
+  if (!txtFile) throw new Error(`No .txt file in GeoNames ${country}.zip`)
 
   const text = await (txtFile as any).async('string')
   const lines = text.split('\n')
@@ -81,32 +95,28 @@ async function fetchGeoNamesCountry(country: 'US' | 'CA'): Promise<PostalRow[]> 
     const cols = line.split('\t')
     if (cols.length < 11) continue
 
-    const c = cols[0]?.trim()              // country
-    const rawCode = cols[1]?.trim()        // postal_code
-    const place = cols[2]?.trim()          // place_name
-    const provinceName = cols[3]?.trim()   // admin_name1 (state/province)
-    const provinceCode = cols[4]?.trim()   // admin_code1 (state abbr / province abbr)
+    const c = cols[0]?.trim()
+    const rawCode = cols[1]?.trim()
+    const placeRaw = cols[2]?.trim()
+    const provinceRaw = cols[3]?.trim()
+    const provinceCode = cols[4]?.trim()
     const lat = parseFloat(cols[9])
     const lng = parseFloat(cols[10])
 
-    if (!rawCode || !place || isNaN(lat) || isNaN(lng)) continue
+    if (!rawCode || !placeRaw || isNaN(lat) || isNaN(lng)) continue
     if (c !== country) continue
 
-    // For Canada, GeoNames includes full postal codes (M5V 1A1). We index by FSA only
-    // (first 3 chars) to match how Daily.Deals stores them — and because Canada Post
-    // doesn't license full postal-code data for free.
+    // Canada: index by FSA (first 3 chars of "M5V 1A1")
     const code = country === 'CA' ? rawCode.toUpperCase().substring(0, 3) : rawCode
-
-    // Dedup: keep the first row per code (typically the most populous place)
     if (seen.has(code)) continue
     seen.add(code)
 
     rows.push({
-      code,
+      code: safeTruncate(code, 10),
       country,
-      city: place,
-      province_state: provinceName || '',
-      state_code: provinceCode || '',
+      city: cleanPlaceName(placeRaw),                  // <= 80 chars, parens/slashes stripped
+      province_state: safeTruncate(provinceRaw || '', 80),
+      state_code: safeTruncate(provinceCode || '', 10),
       latitude: lat,
       longitude: lng,
       source: 'geonames',
@@ -116,27 +126,40 @@ async function fetchGeoNamesCountry(country: 'US' | 'CA'): Promise<PostalRow[]> 
   return rows
 }
 
-// Bulk-upsert in batches to avoid Supabase request size limits
-async function bulkUpsert(rows: PostalRow[]): Promise<{ ok: number; failed: number; errors: string[] }> {
-  const BATCH = 1000
+// Bulk-upsert with smaller batches and per-batch error reporting.
+// Smaller batches mean fewer rows lost when a single row is bad.
+async function bulkUpsert(rows: PostalRow[]): Promise<{
+  ok: number; failed: number; errors: string[]; failed_samples: any[]
+}> {
+  const BATCH = 250
   let ok = 0
   let failed = 0
   const errors: string[] = []
+  const failed_samples: any[] = []
 
   for (let i = 0; i < rows.length; i += BATCH) {
     const batch = rows.slice(i, i + BATCH)
     const { error } = await supabase
       .from('postal_code_locations')
       .upsert(batch, { onConflict: 'code', ignoreDuplicates: false })
+
     if (error) {
       failed += batch.length
       if (errors.length < 5) errors.push(error.message)
+      // Log up to 3 sample rows from failed batches so we can debug
+      if (failed_samples.length < 3) {
+        failed_samples.push({
+          first_row: batch[0],
+          batch_index: i,
+          error: error.message,
+        })
+      }
     } else {
       ok += batch.length
     }
   }
 
-  return { ok, failed, errors }
+  return { ok, failed, errors, failed_samples }
 }
 
 export async function POST(req: NextRequest) {
@@ -148,7 +171,6 @@ export async function POST(req: NextRequest) {
   const log: any = { steps: [] }
 
   try {
-    // Fetch both countries in parallel
     log.steps.push({ step: 'download', started: new Date().toISOString() })
     const [usRows, caRows] = await Promise.all([
       fetchGeoNamesCountry('US'),
@@ -161,7 +183,6 @@ export async function POST(req: NextRequest) {
       ms: Date.now() - startedAt,
     })
 
-    // Upsert both
     const t1 = Date.now()
     const usResult = await bulkUpsert(usRows)
     log.steps.push({ step: 'upsert_us', ...usResult, ms: Date.now() - t1 })
@@ -170,7 +191,6 @@ export async function POST(req: NextRequest) {
     const caResult = await bulkUpsert(caRows)
     log.steps.push({ step: 'upsert_ca', ...caResult, ms: Date.now() - t2 })
 
-    // Verify final count
     const { count: finalCount } = await supabase
       .from('postal_code_locations')
       .select('*', { count: 'exact', head: true })
@@ -193,7 +213,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET = same as POST. Lets you trigger via browser address bar (with ?secret=).
 export async function GET(req: NextRequest) {
   return POST(req)
 }
