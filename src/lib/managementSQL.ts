@@ -149,10 +149,9 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
     id: '007_user_accounts_and_saves',
     name: 'Create user accounts + saved deals + votes',
     sql: `
-      -- Lightweight user table (Supabase Auth integration ready, but works standalone)
       CREATE TABLE IF NOT EXISTS public.users (
         id SERIAL PRIMARY KEY,
-        auth_id UUID UNIQUE,                 -- Optional: links to Supabase auth.users
+        auth_id UUID UNIQUE,
         email VARCHAR(255) UNIQUE NOT NULL,
         username VARCHAR(50) UNIQUE,
         display_name VARCHAR(100),
@@ -169,7 +168,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
       CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
 
-      -- Saved deals (wishlist / favorites)
       CREATE TABLE IF NOT EXISTS public.user_saved_deals (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
@@ -180,7 +178,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_saves_user ON public.user_saved_deals(user_id);
       CREATE INDEX IF NOT EXISTS idx_saves_deal ON public.user_saved_deals(deal_id);
 
-      -- Votes (upvote / downvote)
       CREATE TABLE IF NOT EXISTS public.user_votes (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
@@ -192,7 +189,6 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       CREATE INDEX IF NOT EXISTS idx_votes_deal ON public.user_votes(deal_id);
       CREATE INDEX IF NOT EXISTS idx_votes_user ON public.user_votes(user_id);
 
-      -- Aggregated vote columns on deals
       ALTER TABLE public.deals
         ADD COLUMN IF NOT EXISTS upvote_count INTEGER DEFAULT 0,
         ADD COLUMN IF NOT EXISTS downvote_count INTEGER DEFAULT 0;
@@ -203,6 +199,52 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       GRANT USAGE ON SEQUENCE public.user_saved_deals_id_seq TO authenticated, anon;
       GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_votes TO authenticated, anon;
       GRANT USAGE ON SEQUENCE public.user_votes_id_seq TO authenticated, anon;
+    `,
+  },
+  {
+    id: '008_price_history_and_coupons',
+    name: 'Add price history + coupon tracking',
+    sql: `
+      -- Price history: track every price change on a deal over time
+      CREATE TABLE IF NOT EXISTS public.deal_price_history (
+        id SERIAL PRIMARY KEY,
+        deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
+        price DECIMAL(10, 2) NOT NULL,
+        original_price DECIMAL(10, 2),
+        discount_percent INTEGER,
+        recorded_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_price_history_deal
+        ON public.deal_price_history(deal_id, recorded_at DESC);
+
+      -- Coupon feedback: did the coupon work for the user?
+      CREATE TABLE IF NOT EXISTS public.coupon_feedback (
+        id SERIAL PRIMARY KEY,
+        deal_id INTEGER REFERENCES public.deals(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES public.users(id) ON DELETE SET NULL,
+        worked BOOLEAN NOT NULL,
+        ip_hash VARCHAR(64),                  -- For anonymous users; rate-limited dedup
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_coupon_feedback_deal
+        ON public.coupon_feedback(deal_id);
+      CREATE INDEX IF NOT EXISTS idx_coupon_feedback_user
+        ON public.coupon_feedback(user_id);
+
+      -- Aggregate columns on deals for fast lookup
+      ALTER TABLE public.deals
+        ADD COLUMN IF NOT EXISTS coupon_works_count INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS coupon_fails_count INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS coupon_success_rate INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS lowest_price_ever DECIMAL(10, 2),
+        ADD COLUMN IF NOT EXISTS highest_price_ever DECIMAL(10, 2),
+        ADD COLUMN IF NOT EXISTS avg_price_30d DECIMAL(10, 2),
+        ADD COLUMN IF NOT EXISTS price_trend VARCHAR(10) DEFAULT 'stable';
+
+      GRANT SELECT, INSERT ON public.deal_price_history TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.deal_price_history_id_seq TO authenticated, anon;
+      GRANT SELECT, INSERT ON public.coupon_feedback TO authenticated, anon;
+      GRANT USAGE ON SEQUENCE public.coupon_feedback_id_seq TO authenticated, anon;
     `,
   },
 ]
