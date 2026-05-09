@@ -8,6 +8,7 @@ import SearchBar from '@/components/ui/SearchBar'
 export default function Header() {
   const { location, loading, error, setManualLocation } = useLocation()
   const [showModal, setShowModal] = useState(false)
+  const [showAccountMenu, setShowAccountMenu] = useState(false)
   const [input, setInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -22,6 +23,13 @@ export default function Header() {
     const ok = await setManualLocation(input)
     if (ok) { setShowModal(false); setInput('') }
     setSaving(false)
+  }
+
+  async function handleSignOut() {
+    await fetch('/api/auth', { method: 'DELETE' })
+    setUser(null)
+    setShowAccountMenu(false)
+    window.location.reload()
   }
 
   return (
@@ -71,13 +79,54 @@ export default function Header() {
               </button>
 
               {user ? (
-                <Link href="/account"
-                  className="hidden sm:flex items-center gap-1.5 bg-brand-dark-4 hover:bg-brand-dark-5
-                             border border-white/10 hover:border-brand-red/40
-                             px-3 py-2 rounded-lg text-xs font-medium text-white transition-all">
-                  <span>👤</span>
-                  <span className="max-w-[80px] truncate">{user.username || user.email.split('@')[0]}</span>
-                </Link>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAccountMenu(!showAccountMenu)}
+                    className="hidden sm:flex items-center gap-1.5 bg-brand-dark-4 hover:bg-brand-dark-5
+                               border border-white/10 hover:border-brand-red/40
+                               px-3 py-2 rounded-lg text-xs font-medium text-white transition-all"
+                  >
+                    <span>👤</span>
+                    <span className="max-w-[80px] truncate">{user.username || user.email.split('@')[0]}</span>
+                    <span className="text-brand-gray text-[10px]">▼</span>
+                  </button>
+
+                  {showAccountMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowAccountMenu(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-brand-dark-3 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden">
+                        <Link href="/account" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-white hover:bg-white/5 border-b border-white/5">
+                          👤 My Account
+                        </Link>
+                        <Link href="/cashback" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-white hover:bg-white/5 border-b border-white/5">
+                          💰 Cashback Wallet
+                        </Link>
+                        <Link href="/account#saves" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-white hover:bg-white/5 border-b border-white/5">
+                          🔖 Saved Deals
+                        </Link>
+                        <Link href="/account#alerts" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-white hover:bg-white/5 border-b border-white/5">
+                          🔔 Deal Alerts
+                        </Link>
+                        <Link href="/extension" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-white hover:bg-white/5 border-b border-white/5">
+                          🧩 Browser Extension
+                        </Link>
+                        {user.is_admin && (
+                          <>
+                            <Link href="/admin/scout" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-yellow-400 hover:bg-white/5 border-b border-white/5">
+                              🤖 AI Scout (Admin)
+                            </Link>
+                            <Link href="/admin/moderation" onClick={() => setShowAccountMenu(false)} className="block px-4 py-3 text-sm text-yellow-400 hover:bg-white/5 border-b border-white/5">
+                              🛡️ Moderation (Admin)
+                            </Link>
+                          </>
+                        )}
+                        <button onClick={handleSignOut} className="block w-full text-left px-4 py-3 text-sm text-brand-red hover:bg-white/5">
+                          🚪 Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
                 <Link href="/signin"
                   className="hidden sm:inline-flex text-xs font-bold text-brand-gray-2 hover:text-white px-3 py-2 transition-colors">
@@ -108,6 +157,13 @@ export default function Header() {
                            hover:from-purple-500/30 hover:to-fuchsia-500/30 transition-colors">
                 ✨ For You
               </Link>
+              <Link href="/cashback"
+                className="flex-shrink-0 text-xs font-bold uppercase tracking-wider
+                           bg-gradient-to-r from-yellow-500/20 to-amber-500/20 text-amber-300
+                           border border-amber-500/30 px-3 py-1.5 rounded-md
+                           hover:from-yellow-500/30 hover:to-amber-500/30 transition-colors">
+                💰 Cashback
+              </Link>
               <Link href="/deals/today"
                 className="flex-shrink-0 text-xs font-bold text-white uppercase tracking-wider
                            bg-white/5 border border-white/10 px-3 py-1.5 rounded-md
@@ -131,6 +187,11 @@ export default function Header() {
                 className="flex-shrink-0 text-xs font-medium text-brand-gray-2 uppercase tracking-wider
                            px-3 py-1.5 rounded-md hover:text-white hover:bg-white/8 transition-colors ml-2">
                 🏪 All Stores
+              </Link>
+              <Link href="/extension"
+                className="flex-shrink-0 text-xs font-medium text-brand-gray-2 uppercase tracking-wider
+                           px-3 py-1.5 rounded-md hover:text-white hover:bg-white/8 transition-colors">
+                🧩 Extension
               </Link>
             </div>
           </div>
