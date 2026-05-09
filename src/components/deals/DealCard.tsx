@@ -4,9 +4,18 @@ import { Deal } from '@/types'
 import { formatPrice, getTimeRemaining } from '@/lib/utils'
 import { hotnessTier } from '@/lib/hotness'
 
-export default function DealCard({ deal }: { deal: Deal }) {
+export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
+  deal: Deal
+  initialUserVote?: number | null
+  initialIsSaved?: boolean
+}) {
   const [timeLeft, setTimeLeft] = useState<string | null>(null)
   const [clicking, setClicking] = useState(false)
+  const [userVote, setUserVote] = useState<number | null>(initialUserVote ?? null)
+  const [upvotes, setUpvotes] = useState((deal as any).upvote_count || 0)
+  const [downvotes, setDownvotes] = useState((deal as any).downvote_count || 0)
+  const [isSaved, setIsSaved] = useState(initialIsSaved ?? false)
+  const [authError, setAuthError] = useState(false)
 
   useEffect(() => {
     if (!deal.expires_at) return
@@ -30,17 +39,66 @@ export default function DealCard({ deal }: { deal: Deal }) {
     setClicking(false)
   }
 
+  async function handleVote(v: 1 | -1, e: React.MouseEvent) {
+    e.stopPropagation()
+    const newVote = userVote === v ? 0 : v // tap same = remove
+    try {
+      const res = await fetch('/api/votes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deal_id: deal.id, vote: newVote }),
+      })
+      if (res.status === 401) { setAuthError(true); setTimeout(() => setAuthError(false), 2500); return }
+      const json = await res.json()
+      if (json.success) {
+        setUpvotes(json.upvotes); setDownvotes(json.downvotes)
+        setUserVote(newVote === 0 ? null : newVote)
+      }
+    } catch {}
+  }
+
+  async function handleSave(e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      if (isSaved) {
+        const res = await fetch(`/api/saves?deal_id=${deal.id}`, { method: 'DELETE' })
+        if (res.ok) setIsSaved(false)
+        else if (res.status === 401) { setAuthError(true); setTimeout(() => setAuthError(false), 2500) }
+      } else {
+        const res = await fetch('/api/saves', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deal_id: deal.id }),
+        })
+        if (res.ok) setIsSaved(true)
+        else if (res.status === 401) { setAuthError(true); setTimeout(() => setAuthError(false), 2500) }
+      }
+    } catch {}
+  }
+
   const discount = deal.discount_percent || (deal.original_price
     ? Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100)
     : 0)
   const savings = deal.original_price ? deal.original_price - deal.deal_price : null
 
-  // Hotness tier — only show badge for TRENDING or higher (45+)
   const score = deal.hotness_score || 0
   const tier = score >= 45 ? hotnessTier(score) : null
+  const netVotes = upvotes - downvotes
 
   return (
-    <div className="deal-card card-shine group cursor-pointer" onClick={handleClick}>
+    <div className="deal-card card-shine group cursor-pointer relative" onClick={handleClick}>
+      {/* SAVE button — top right corner over card */}
+      <button onClick={handleSave}
+        className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center
+                    backdrop-blur-md transition-all ${
+                      isSaved
+                        ? 'bg-brand-red text-white shadow-glow'
+                        : 'bg-black/60 text-white/80 hover:bg-brand-red/80 hover:text-white'
+                    }`}
+        title={isSaved ? 'Saved' : 'Save deal'}>
+        {isSaved ? '🔖' : '🔖'}
+      </button>
+
       {/* IMAGE */}
       <div className="relative bg-brand-dark-4 h-44 overflow-hidden flex-shrink-0">
         {deal.image_url ? (
@@ -50,7 +108,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
           <div className="w-full h-full flex items-center justify-center opacity-20 text-5xl">🛍️</div>
         )}
 
-        {/* DISCOUNT */}
         {discount > 0 && (
           <div className="absolute top-2 left-2 bg-brand-red text-white text-xs font-black
                           px-2.5 py-1 rounded-md uppercase tracking-wider shadow-glow">
@@ -58,22 +115,20 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* HOTNESS TIER (top right, takes precedence over deal type if hot) */}
         {tier ? (
-          <div className="absolute top-2 right-2 text-xs font-black uppercase tracking-wider
+          <div className="absolute top-12 right-2 text-xs font-black uppercase tracking-wider
                           px-2 py-1 rounded-md shadow-md flex items-center gap-1"
                style={{ background: tier.color, color: tier.textColor }}>
             <span>{tier.emoji}</span>
             <span>{tier.label}</span>
           </div>
         ) : (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-12 right-2">
             {deal.deal_type === 'flash'     && <span className="badge-flash">⚡ Flash</span>}
             {deal.deal_type === 'clearance' && <span className="badge-clear">Clearance</span>}
           </div>
         )}
 
-        {/* EDITOR'S CHOICE — gold star top-left, below discount */}
         {deal.is_editors_choice && (
           <div className="absolute top-10 left-2 bg-gradient-to-r from-yellow-500 to-amber-400
                           text-black text-xs font-black px-2 py-1 rounded-md
@@ -83,7 +138,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* VERIFIED — checkmark when click_count >= 5 */}
         {(deal.is_verified || (deal.click_count || 0) >= 5) && !deal.is_editors_choice && (
           <div className="absolute top-10 left-2 bg-brand-green/90 text-white
                           text-xs font-bold px-2 py-1 rounded-md
@@ -93,7 +147,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* RETAILER */}
         {deal.retailer_name && (
           <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm
                           text-white text-xs font-bold px-2 py-1 rounded-md">
@@ -101,7 +154,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* FLAG */}
         <div className="absolute bottom-2 right-2 text-base">
           {deal.country === 'CA' ? '🇨🇦' : '🇺🇸'}
         </div>
@@ -144,14 +196,36 @@ export default function DealCard({ deal }: { deal: Deal }) {
             <div className="text-xs text-brand-red timer-pulse font-medium">⏱ Ends in {timeLeft}</div>
           )}
 
-          {/* HOTNESS BAR — visual indicator of score for hot+ tier */}
-          {tier && (
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex-1 h-1 bg-brand-dark-4 rounded-full overflow-hidden">
-                <div className="h-full transition-all duration-500"
-                     style={{ width: `${score}%`, background: tier.color }} />
+          {/* VOTE BAR + HOTNESS BAR */}
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1">
+              <button onClick={e => handleVote(1, e)}
+                className={`px-1.5 py-1 rounded-md text-[11px] font-bold transition-colors ${
+                  userVote === 1 ? 'bg-brand-green text-white' : 'bg-white/5 text-brand-gray hover:bg-white/10'
+                }`}>▲</button>
+              <span className={`font-mono text-xs ${
+                netVotes > 0 ? 'text-brand-green' : netVotes < 0 ? 'text-brand-red' : 'text-brand-gray'
+              }`}>{netVotes > 0 ? `+${netVotes}` : netVotes}</span>
+              <button onClick={e => handleVote(-1, e)}
+                className={`px-1.5 py-1 rounded-md text-[11px] font-bold transition-colors ${
+                  userVote === -1 ? 'bg-brand-red text-white' : 'bg-white/5 text-brand-gray hover:bg-white/10'
+                }`}>▼</button>
+            </div>
+
+            {tier && (
+              <div className="flex items-center gap-1 flex-1 ml-2">
+                <div className="flex-1 h-1 bg-brand-dark-4 rounded-full overflow-hidden">
+                  <div className="h-full transition-all duration-500"
+                       style={{ width: `${score}%`, background: tier.color }} />
+                </div>
+                <span className="text-brand-gray font-mono text-[10px]">{score}</span>
               </div>
-              <span className="text-brand-gray font-mono text-[10px]">{score}</span>
+            )}
+          </div>
+
+          {authError && (
+            <div className="text-brand-red text-[10px] text-center py-1">
+              Sign in to save / vote →
             </div>
           )}
 
