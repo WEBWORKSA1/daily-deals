@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/db'
 import { getUserFromRequest } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
+// Bump save_count via RPC, falling back to read-then-write if RPC missing.
+async function bumpSaveCount(dealId: number, delta: number) {
+  if (delta > 0) {
+    try {
+      const res: any = await supabase.rpc('increment_save_count', { d_id: dealId })
+      if (!res?.error) return
+    } catch {}
+  }
+  // Fallback / decrement path
+  try {
+    const { data: d } = await supabase
+      .from('deals')
+      .select('save_count')
+      .eq('id', dealId)
+      .single()
+    const current = (d as any)?.save_count || 0
+    const next = Math.max(0, current + delta)
+    await supabase.from('deals').update({ save_count: next }).eq('id', dealId)
+  } catch {}
+}
+
 // Save a deal
 export async function POST(req: NextRequest) {
   const user = await getUserFromRequest(req)
@@ -9,24 +32,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const { deal_id } = await req.json()
-    if (!deal_id) return NextResponse.json({ error: 'deal_id required' }, { status: 400 })
+    const dealId = parseInt(deal_id, 10)
+    if (!dealId || isNaN(dealId)) {
+      return NextResponse.json({ error: 'deal_id required' }, { status: 400 })
+    }
 
     const { error } = await supabase
       .from('user_saved_deals')
-      .upsert({ user_id: user.id, deal_id: parseInt(deal_id) }, { onConflict: 'user_id,deal_id' })
+      .upsert({ user_id: user.id, deal_id: dealId }, { onConflict: 'user_id,deal_id' })
     if (error) throw error
 
-    // Increment save_count on the deal
-    await supabase.rpc('increment_save_count', { d_id: parseInt(deal_id) }).then(() => {})
-      .catch(async () => {
-        // Fallback if RPC doesn't exist: read-then-write
-        const { data: d } = await supabase.from('deals').select('save_count').eq('id', parseInt(deal_id)).single()
-        await supabase.from('deals').update({ save_count: ((d as any)?.save_count || 0) + 1 }).eq('id', parseInt(deal_id))
-      })
+    await bumpSaveCount(dealId, 1)
 
     return NextResponse.json({ success: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json({ error: e.message || String(e) }, { status: 500 })
   }
 }
 
@@ -55,7 +75,7 @@ export async function GET(req: NextRequest) {
     }))
     return NextResponse.json({ saves })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json({ error: e.message || String(e) }, { status: 500 })
   }
 }
 
@@ -65,22 +85,23 @@ export async function DELETE(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
-  const dealId = searchParams.get('deal_id')
-  if (!dealId) return NextResponse.json({ error: 'deal_id required' }, { status: 400 })
+  const dealIdStr = searchParams.get('deal_id')
+  const dealId = parseInt(dealIdStr || '', 10)
+  if (!dealId || isNaN(dealId)) {
+    return NextResponse.json({ error: 'deal_id required' }, { status: 400 })
+  }
 
   try {
-    await supabase.from('user_saved_deals')
+    await supabase
+      .from('user_saved_deals')
       .delete()
       .eq('user_id', user.id)
-      .eq('deal_id', parseInt(dealId))
+      .eq('deal_id', dealId)
 
-    // Decrement save_count
-    const { data: d } = await supabase.from('deals').select('save_count').eq('id', parseInt(dealId)).single()
-    const newCount = Math.max(0, ((d as any)?.save_count || 0) - 1)
-    await supabase.from('deals').update({ save_count: newCount }).eq('id', parseInt(dealId))
+    await bumpSaveCount(dealId, -1)
 
     return NextResponse.json({ success: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json({ error: e.message || String(e) }, { status: 500 })
   }
 }
