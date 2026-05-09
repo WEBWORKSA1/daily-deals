@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Script from 'next/script'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import DealCard from '@/components/deals/DealCard'
@@ -197,10 +196,10 @@ export default async function SEOLandingPage({ params }: Props) {
 
   return (
     <>
-      <Script id="list-schema" type="application/ld+json"
+      <script type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
       {faqSchema && (
-        <Script id="faq-schema" type="application/ld+json"
+        <script type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       )}
       <Header />
