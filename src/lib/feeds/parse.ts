@@ -81,7 +81,8 @@ export function extractPrices(text: string): { price: number | null; original: n
   const orig = t.match(/(?:reg(?:ularly|\.)?|orig(?:inally|\.)?|was|list(?:ed)?|msrp|retail)\s*:?\s*(?:C\$|CA\$|\$)\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{2}))?/i)
   const scrubbed = NOT_A_PRICE.reduce((s, re) => s.replace(re, ' '), t)
   const all = Array.from(scrubbed.matchAll(MONEY)).map(toNum).filter(n => n > 0 && n < 50000)
-  const freeItem = /\bfree\b/i.test(t.replace(/\bfree\s+(?:standard\s+|2-day\s+|next-day\s+)?(?:shipping|s&h|store\s+pickup|in-store\s+pickup|pickup|delivery|returns?|trial|ship)\b/gi, ' '))
+  // Only genuinely free items: headline starts with "Free", or says free game/download/sample, 100% off, or $0.
+  const freeItem = /^\s*(?:\[[^\]]*\]\s*)?(?:[\w.'&]+:\s*)?free\b(?!\s+(?:standard\s+|2-day\s+|next-day\s+)?(?:shipping|s&h|store\s+pickup|in-store\s+pickup|pickup|delivery|returns?|trial|ship))|\bfree (?:game|games|download|sample|samples|to keep|after rebate|with code)\b|\b100% off\b|\$0(?:\.00)?\b/i.test(t)
   if (all.length === 0) return { price: freeItem ? 0 : null, original: null }
   const price = all.length ? all[0] : null
   let original = orig ? toNum(orig) : null
@@ -99,7 +100,7 @@ export const RETAILERS: Retailer[] = [
   { slug: 'walmart', name: 'Walmart', re: /walmart/i, country: 'US', search: q => `https://www.walmart.com/search?q=${encodeURIComponent(q)}` },
   { slug: 'bestbuy-ca', name: 'Best Buy Canada', re: /bestbuy\.ca|best buy canada/i, country: 'CA', search: q => `https://www.bestbuy.ca/en-ca/search?search=${encodeURIComponent(q)}` },
   { slug: 'bestbuy', name: 'Best Buy', re: /best ?buy/i, country: 'US', search: q => `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(q)}` },
-  { slug: 'target', name: 'Target', re: /\btarget\b/i, country: 'US', search: q => `https://www.target.com/s?searchTerm=${encodeURIComponent(q)}` },
+  { slug: 'target', name: 'Target', re: /\[target\]|^\s*target\b|\btarget\.com\b|\b(?:at|from|via|@)\s+target\b|\btarget circle\b|\btarget:/i, country: 'US', search: q => `https://www.target.com/s?searchTerm=${encodeURIComponent(q)}` },
   { slug: 'costco', name: 'Costco', re: /costco/i, country: 'BOTH', search: q => `https://www.costco.com/CatalogSearch?keyword=${encodeURIComponent(q)}`, searchCA: q => `https://www.costco.ca/CatalogSearch?keyword=${encodeURIComponent(q)}` },
   { slug: 'homedepot', name: 'The Home Depot', re: /home ?depot/i, country: 'BOTH', search: q => `https://www.homedepot.com/s/${encodeURIComponent(q)}`, searchCA: q => `https://www.homedepot.ca/search?q=${encodeURIComponent(q)}` },
   { slug: 'lowes', name: "Lowe's", re: /lowe'?s/i, country: 'US', search: q => `https://www.lowes.com/search?searchTerm=${encodeURIComponent(q)}` },
@@ -107,6 +108,7 @@ export const RETAILERS: Retailer[] = [
   { slug: 'ebay', name: 'eBay', re: /\bebay\b/i, country: 'BOTH', search: q => `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}`, searchCA: q => `https://www.ebay.ca/sch/i.html?_nkw=${encodeURIComponent(q)}` },
   { slug: 'macys', name: "Macy's", re: /macy'?s/i, country: 'US', search: q => `https://www.macys.com/shop/featured/${encodeURIComponent(q)}` },
   { slug: 'kohls', name: "Kohl's", re: /kohl'?s/i, country: 'US', search: q => `https://www.kohls.com/search.jsp?search=${encodeURIComponent(q)}` },
+  { slug: 'footlocker', name: 'Foot Locker', re: /foot ?locker/i, country: 'BOTH', search: q => `https://www.footlocker.com/search?query=${encodeURIComponent(q)}`, searchCA: q => `https://www.footlocker.ca/en/search?query=${encodeURIComponent(q)}` },
   { slug: 'nike', name: 'Nike', re: /\bnike\b/i, country: 'BOTH', search: q => `https://www.nike.com/w?q=${encodeURIComponent(q)}`, searchCA: q => `https://www.nike.com/ca/w?q=${encodeURIComponent(q)}` },
   { slug: 'adidas', name: 'adidas', re: /adidas/i, country: 'BOTH', search: q => `https://www.adidas.com/us/search?q=${encodeURIComponent(q)}`, searchCA: q => `https://www.adidas.ca/en/search?q=${encodeURIComponent(q)}` },
   { slug: 'dell', name: 'Dell', re: /\bdell\b/i, country: 'BOTH', search: q => `https://www.dell.com/en-us/search/${encodeURIComponent(q)}`, searchCA: q => `https://www.dell.com/en-ca/search/${encodeURIComponent(q)}` },
@@ -119,6 +121,7 @@ export const RETAILERS: Retailer[] = [
   { slug: 'canadiantire', name: 'Canadian Tire', re: /canadian tire/i, country: 'CA', search: q => `https://www.canadiantire.ca/en/search-results.html?q=${encodeURIComponent(q)}` },
   { slug: 'the-source', name: 'The Source', re: /\bthe source\b/i, country: 'CA', search: q => `https://www.thesource.ca/en-ca/search?text=${encodeURIComponent(q)}` },
   { slug: 'sportchek', name: 'Sport Chek', re: /sport ?chek/i, country: 'CA', search: q => `https://www.sportchek.ca/search.html?q=${encodeURIComponent(q)}` },
+  { slug: 'loblaws', name: 'Loblaws', re: /loblaws|real canadian superstore|\bno frills\b|zehrs|fortinos|provigo|maxi\b|post city market/i, country: 'CA', search: q => `https://www.loblaws.ca/search?search-bar=${encodeURIComponent(q)}` },
   { slug: 'shoppers', name: 'Shoppers Drug Mart', re: /shoppers drug mart/i, country: 'CA', search: q => `https://shop.shoppersdrugmart.ca/search?text=${encodeURIComponent(q)}` },
   { slug: 'apple', name: 'Apple', re: /apple store|apple\.com/i, country: 'BOTH', search: q => `https://www.apple.com/us/search/${encodeURIComponent(q)}`, searchCA: q => `https://www.apple.com/ca/search/${encodeURIComponent(q)}` },
   { slug: 'steam', name: 'Steam', re: /\[steam\]|\(steam\)|store\.steampowered|\bon steam\b|\bsteam (?:store|key|sale)\b/i, country: 'BOTH', search: q => `https://store.steampowered.com/search/?term=${encodeURIComponent(q)}` },
