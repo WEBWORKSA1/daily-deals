@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 
 export default function ScoutAdminPage() {
   const [tab, setTab] = useState<'queue' | 'run'>('queue')
@@ -73,13 +71,13 @@ export default function ScoutAdminPage() {
 
   return (
     <>
-      <Header />
+
       <main className="min-h-screen bg-brand-bg">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
           <div className="mb-8">
-            <h1 className="font-heading text-4xl font-900 text-white uppercase tracking-tight">
-              🤖 AI Deal Scout
+            <h1 className="font-heading text-4xl font-medium text-ink uppercase tracking-tight">
+              AI Deal Scout
             </h1>
             <p className="text-brand-gray mt-2">
               Auto-discover deals from RSS feeds. Review the queue and approve.
@@ -87,13 +85,13 @@ export default function ScoutAdminPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-8 border-b border-white/10">
+          <div className="flex gap-2 mb-8 border-b border-rule">
             {(['queue', 'run'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-6 py-3 font-bold uppercase tracking-tight ${
-                  tab === t ? 'text-brand-red border-b-2 border-brand-red' : 'text-brand-gray hover:text-white'
+                  tab === t ? 'text-brand-red border-b-2 border-brand-red' : 'text-brand-gray hover:text-accent'
                 }`}
               >
                 {t === 'queue' ? `Pending Queue${pending.length ? ` (${pending.length})` : ''}` : 'Run Scout'}
@@ -106,7 +104,7 @@ export default function ScoutAdminPage() {
             <div>
               {pending.length === 0 ? (
                 <div className="text-center py-20 text-brand-gray">
-                  <div className="text-6xl mb-4">✨</div>
+                  <div className="text-6xl mb-4"></div>
                   <p>No pending deals. Run the scout to discover new deals.</p>
                 </div>
               ) : (
@@ -123,7 +121,7 @@ export default function ScoutAdminPage() {
                           </div>
                           <h3 className="font-heading font-bold text-gray-900 line-clamp-2">{deal.title}</h3>
                           <div className="flex items-baseline gap-2 mt-1">
-                            {deal.deal_price && <span className="text-lg font-900 text-brand-red">${deal.deal_price}</span>}
+                            {deal.deal_price && <span className="text-lg font-medium text-brand-red">${deal.deal_price}</span>}
                             {deal.original_price && <span className="text-sm text-gray-500 line-through">${deal.original_price}</span>}
                             {deal.discount_percent && <span className="text-xs font-bold text-green-600">-{deal.discount_percent}%</span>}
                           </div>
@@ -159,32 +157,32 @@ export default function ScoutAdminPage() {
           {/* RUN TAB */}
           {tab === 'run' && (
             <div className="max-w-3xl">
-              <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4">
+              <div className="bg-paper-2 border border-rule rounded-lg p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-white mb-2">RSS Feed URL</label>
+                  <label className="block text-sm font-bold text-ink mb-2">RSS Feed URL</label>
                   <input
                     type="url"
                     value={feedUrl}
                     onChange={e => setFeedUrl(e.target.value)}
                     placeholder="https://example.com/deals/feed"
-                    className="w-full bg-black/30 border border-white/20 rounded px-4 py-3 text-white"
+                    className="w-full bg-white border border-rule rounded px-4 py-3 text-ink"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-white mb-2">Source Name</label>
+                  <label className="block text-sm font-bold text-ink mb-2">Source Name</label>
                   <input
                     type="text"
                     value={sourceName}
                     onChange={e => setSourceName(e.target.value)}
                     placeholder="e.g., Slickdeals Frontpage"
-                    className="w-full bg-black/30 border border-white/20 rounded px-4 py-3 text-white"
+                    className="w-full bg-white border border-rule rounded px-4 py-3 text-ink"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-white mb-2">
+                    <label className="block text-sm font-bold text-ink mb-2">
                       Min score (queue): {minScore}
                     </label>
                     <input
@@ -194,7 +192,7 @@ export default function ScoutAdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-white mb-2">
+                    <label className="block text-sm font-bold text-ink mb-2">
                       Auto-approve above: {autoApproveAbove}
                     </label>
                     <input
@@ -209,7 +207,7 @@ export default function ScoutAdminPage() {
                   <button
                     onClick={previewFeed}
                     disabled={!feedUrl}
-                    className="bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-3 rounded disabled:opacity-50"
+                    className="bg-paper-2 hover:bg-white/20 text-ink font-bold px-6 py-3 rounded disabled:opacity-50"
                   >
                     Preview Feed
                   </button>
@@ -226,10 +224,10 @@ export default function ScoutAdminPage() {
               {/* Preview results */}
               {previewItems.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="font-heading text-xl font-bold text-white mb-4">Preview ({previewItems.length} items)</h3>
+                  <h3 className="font-heading text-xl font-bold text-ink mb-4">Preview ({previewItems.length} items)</h3>
                   <div className="space-y-2">
                     {previewItems.map((item, i) => (
-                      <div key={i} className="bg-white/5 rounded p-3 flex items-center gap-3">
+                      <div key={i} className="bg-paper-2 rounded p-3 flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
                           item.score >= 80 ? 'bg-green-500/30 text-green-400' :
                           item.score >= 50 ? 'bg-yellow-500/30 text-yellow-400' :
@@ -238,7 +236,7 @@ export default function ScoutAdminPage() {
                           {item.score}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-white text-sm font-bold truncate">{item.title}</div>
+                          <div className="text-ink text-sm font-bold truncate">{item.title}</div>
                           <div className="text-xs text-brand-gray">
                             {item.retailer || 'no retailer'} · {item.category || 'no category'} {item.price ? `· $${item.price}` : ''}
                           </div>
@@ -251,10 +249,10 @@ export default function ScoutAdminPage() {
 
               {/* Run results */}
               {runResult && (
-                <div className="mt-8 bg-white/5 rounded p-6">
-                  <h3 className="font-heading text-xl font-bold text-white mb-3">Run Results</h3>
+                <div className="mt-8 bg-paper-2 rounded p-6">
+                  <h3 className="font-heading text-xl font-bold text-ink mb-3">Run Results</h3>
                   {runResult.ok ? (
-                    <div className="text-white">
+                    <div className="text-ink">
                       <p>Found {runResult.items_found} items, processed {runResult.items_processed},
                       saved <span className="text-green-400 font-bold">{runResult.items_saved}</span> to queue.</p>
                       <button onClick={() => setTab('queue')} className="text-brand-red underline text-sm mt-2">
@@ -271,7 +269,7 @@ export default function ScoutAdminPage() {
 
         </div>
       </main>
-      <Footer />
+
     </>
   )
 }
