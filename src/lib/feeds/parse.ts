@@ -58,7 +58,7 @@ export function parseFeed(xml: string): FeedItem[] {
   return items
 }
 
-// ── Deal heuristics ─────────────────────────────────────────────────────────────────────────
+// ── Deal heuristics ────────────────────────────────────────────────────────
 
 const MONEY = /(?:C\$|CA\$|CAD\s?\$?|US\$|\$)\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{2}))?/g
 
@@ -66,11 +66,23 @@ function toNum(m: RegExpMatchArray): number {
   return parseFloat(m[1].replace(/,/g, '') + (m[2] ? '.' + m[2] : ''))
 }
 
+// Dollar amounts that are never the item's price: shipping/order thresholds ("free shipping
+// w/ $99", "on $35+"), cart minimums, and money-off / reward amounts ("$10 off", "$5 back").
+const AMT = String.raw`(?:C\$|CA\$|CAD\s?\$?|US\$|\$)\s?\d[\d,]*(?:\.\d{2})?`
+const NOT_A_PRICE = [
+  new RegExp(String.raw`\b(?:w\/|with|on|over|above|orders?(?:\s+(?:of|over))?|min(?:imum|\.)?(?:\s+(?:order|purchase|spend))?(?:\s+of)?|spend(?:ing)?|purchases?\s+of|when you (?:spend|buy))\s*${AMT}\+?`, 'gi'),
+  new RegExp(String.raw`${AMT}(?:\+|\s*(?:or more\b|minimum\b|min\.?(?=\s|$)|orders?\b|purchases?\b))`, 'gi'),
+  new RegExp(String.raw`${AMT}\s*(?:off\b|back\b|cash ?back\b|credit\b|gift ?card\b|e-?gift\b|in (?:rewards|points|cash|savings)\b|kohl'?s cash\b|rewards?\b|bonus\b)`, 'gi'),
+  new RegExp(String.raw`\b(?:save|saving|savings of)\s+(?:up to\s+)?${AMT}`, 'gi'),
+]
+
 export function extractPrices(text: string): { price: number | null; original: number | null } {
   const t = text.replace(/\s+/g, ' ')
   const orig = t.match(/(?:reg(?:ularly|\.)?|orig(?:inally|\.)?|was|list(?:ed)?|msrp|retail)\s*:?\s*(?:C\$|CA\$|\$)\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{2}))?/i)
-  const all = Array.from(t.matchAll(MONEY)).map(toNum).filter(n => n > 0 && n < 50000)
-  if (/\bfree\b/i.test(t) && all.length === 0) return { price: 0, original: null }
+  const scrubbed = NOT_A_PRICE.reduce((s, re) => s.replace(re, ' '), t)
+  const all = Array.from(scrubbed.matchAll(MONEY)).map(toNum).filter(n => n > 0 && n < 50000)
+  const freeItem = /\bfree\b/i.test(t.replace(/\bfree\s+(?:standard\s+|2-day\s+|next-day\s+)?(?:shipping|s&h|store\s+pickup|in-store\s+pickup|pickup|delivery|returns?|trial|ship)\b/gi, ' '))
+  if (all.length === 0) return { price: freeItem ? 0 : null, original: null }
   const price = all.length ? all[0] : null
   let original = orig ? toNum(orig) : null
   if (!original && all.length > 1 && all[1] > (price || 0) * 1.05 && /off|save|reg|was|\(/i.test(t)) original = all[1]

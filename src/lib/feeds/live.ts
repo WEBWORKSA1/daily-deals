@@ -40,7 +40,7 @@ export const SOURCES: Source[] = [
 
 const CHEAPSHARK_STORES: Record<string, string> = { '1': 'Steam', '2': 'GamersGate', '3': 'Green Man Gaming', '7': 'GOG', '8': 'EA App', '11': 'Humble Store', '13': 'Ubisoft Store', '15': 'Fanatical', '21': 'WinGameStore', '23': 'GameBillet', '24': 'Voidu', '25': 'Epic Games Store', '27': 'Gamesplanet', '28': 'Gamesload', '29': '2Game', '30': 'IndieGala', '31': 'Blizzard', '33': 'DLGamer', '34': 'Noctre', '35': 'DreamGame' }
 
-// ── signed outbound links ─────────────────────────────────────────────────────────────────────
+// ── signed outbound links ─────────────────────────────────────────────────
 function secret() { return process.env.CRON_SECRET || process.env.LINK_SIGNING_SECRET || 'daily-deals-link-v1' }
 export function signUrl(u: string): string { return createHmac('sha256', secret()).update(u).digest('hex').slice(0, 20) }
 export function goLink(target: string): string { return `/go?u=${encodeURIComponent(target)}&s=${signUrl(target)}` }
@@ -58,7 +58,7 @@ export function monetize(target: string, country: 'US' | 'CA' | 'BOTH'): string 
   } catch { return target }
 }
 
-// ── normalization ─────────────────────────────────────────────────────────────────────
+// ── normalization ─────────────────────────────────────────────────────────
 function normalizeRss(src: Source, xml: string): Deal[] {
   const out: Deal[] = []
   for (const it of parseFeed(xml).slice(0, 40)) {
@@ -76,7 +76,8 @@ function normalizeRss(src: Source, xml: string): Deal[] {
     const target = retailer && query.length > 3 ? retailer.search(query) : it.link
     const expires = dnExpires && !isNaN(Date.parse(dnExpires)) ? new Date(dnExpires).toISOString() : null
     const text = `${it.title} ${it.description}`
-    const discount = original ? Math.round(((original - price) / original) * 100) : null
+    const stated = it.title.match(/(?<!up to )\b(\d{1,2})%\s*off\b/i)
+    const discount = original ? Math.round(((original - price) / original) * 100) : stated ? parseInt(stated[1], 10) : null
     const id = -(hash32(src.id + it.link) % 2_000_000_000) - 1
     out.push({
       id,
@@ -190,7 +191,7 @@ async function collect(): Promise<{ deals: Deal[]; sources: Array<{ id: string; 
   }
 }
 
-export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v2'], { revalidate: 1800, tags: ['live-deals'] })
+export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v3'], { revalidate: 1800, tags: ['live-deals'] })
 
 export async function getLiveDeals(): Promise<Deal[]> {
   try { return (await getLiveFeed()).deals } catch { return [] }
