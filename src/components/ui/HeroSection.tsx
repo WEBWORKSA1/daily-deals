@@ -3,16 +3,19 @@ import { useLocation } from '@/hooks/useLocation'
 import Link from 'next/link'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface Props {
   totalDeals: number
+  sourceCount?: number
   spotlightDeal?: Deal | null
 }
 
-export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
+export default function HeroSection({ totalDeals, spotlightDeal, sourceCount = 0 }: Props) {
   const { location, loading } = useLocation()
   const [imgFailed, setImgFailed] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+  useEffect(() => { const i = imgRef.current; if (i && i.complete && i.naturalWidth === 0) setImgFailed(true) }, [])
 
   const showSpotlight = !!spotlightDeal
   const showSpotlightImage = spotlightDeal?.image_url && !imgFailed
@@ -31,7 +34,7 @@ export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
           {/* LEFT — EDITORIAL HEADLINE */}
           <div>
             <div className="section-eyebrow mb-4">
-              {loading ? 'DETECTING LOCATION…' : location
+              {loading ? 'NORTH AMERICAN EDITION' : location
                 ? `EDITION FOR ${location.city.toUpperCase()}, ${location.stateCode}`
                 : 'NORTH AMERICAN EDITION'}
             </div>
@@ -42,7 +45,7 @@ export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
             </h1>
 
             <p className="text-ink-2 text-base lg:text-lg leading-relaxed max-w-xl mb-7">
-              Hand-picked discounts from 1,000+ retailers across the US and Canada. Verified by editors. Updated every 24 hours. Always free.
+              The day’s best discounts from major US and Canadian retailers — scored, de-duplicated and refreshed around the clock by our automated deal desk. Always free.
             </p>
 
             {/* STATS ROW */}
@@ -58,8 +61,8 @@ export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
                 <div className="text-[10px] tracking-[0.15em] text-ink-muted mt-1.5">ZIPS COVERED</div>
               </div>
               <div>
-                <div className="font-mono text-2xl font-medium text-ink tabular-nums leading-none">1,000+</div>
-                <div className="text-[10px] tracking-[0.15em] text-ink-muted mt-1.5">RETAILERS</div>
+                <div className="font-mono text-2xl font-medium text-ink tabular-nums leading-none">{sourceCount > 0 ? sourceCount : '—'}</div>
+                <div className="text-[10px] tracking-[0.15em] text-ink-muted mt-1.5">SOURCES SCANNED</div>
               </div>
             </div>
 
@@ -75,7 +78,7 @@ export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
 
           {/* RIGHT — REAL FEATURED DAILY DEAL CARD (only renders if we have a real deal) */}
           {showSpotlight && spotlightDeal && (
-            <Link href={`/deal/${spotlightDeal.id}`} className="bg-white border border-ink p-6 lg:p-7 block hover:border-accent transition-colors group">
+            <a href={spotlightDeal.is_live ? spotlightDeal.out_url : `/deal/${spotlightDeal.id}`} target={spotlightDeal.is_live ? '_blank' : undefined} rel={spotlightDeal.is_live ? 'noopener sponsored' : undefined} className="bg-white border border-ink p-6 lg:p-7 block hover:border-accent transition-colors group">
               <div className="flex items-center gap-2 mb-5">
                 <span className="w-1.5 h-1.5 bg-accent rounded-full" aria-hidden />
                 <span className="text-[11px] tracking-[0.2em] text-accent font-medium">FEATURED DAILY DEAL</span>
@@ -85,6 +88,7 @@ export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
               <div className="bg-paper-2 border border-rule h-44 sm:h-56 mb-5 overflow-hidden relative">
                 {showSpotlightImage ? (
                   <img
+                    ref={imgRef}
                     src={spotlightDeal.image_url!}
                     alt={spotlightDeal.title}
                     onError={() => setImgFailed(true)}
@@ -119,7 +123,7 @@ export default function HeroSection({ totalDeals, spotlightDeal }: Props) {
               <div className="btn-primary w-full justify-center">
                 See this deal →
               </div>
-            </Link>
+            </a>
           )}
 
         </div>
