@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { supabase } from '@/lib/db'
 import { CATEGORIES } from '@/lib/utils'
+import { GUIDES } from '@/lib/guides'
+import { STORE_GUIDES } from '@/lib/stores'
 
 export const revalidate = 3600 // re-generate every hour
 
@@ -21,13 +23,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/search`,              lastModified: now, changeFrequency: 'weekly',  priority: 0.6 },
     { url: `${BASE}/cashback`,            lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
     { url: `${BASE}/extension`,           lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
-    { url: `${BASE}/for-you`,             lastModified: now, changeFrequency: 'daily',   priority: 0.5 },
     { url: `${BASE}/submit`,              lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/about`,               lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${BASE}/privacy`,             lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
     { url: `${BASE}/terms`,               lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
     { url: `${BASE}/disclosure`,          lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
-    { url: `${BASE}/contact`,             lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
+    { url: `${BASE}/contact`,             lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${BASE}/legal`,               lastModified: now, changeFrequency: 'yearly',  priority: 0.2 },
+    { url: `${BASE}/coupons`,             lastModified: now, changeFrequency: 'daily',   priority: 0.85 },
+    { url: `${BASE}/guides`,              lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
+    { url: `${BASE}/videos`,              lastModified: now, changeFrequency: 'daily',   priority: 0.7 },
+    { url: `${BASE}/concierge`,           lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/contests`,            lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
+    { url: `${BASE}/contests/rules`,      lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${BASE}/support`,             lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/advertise`,           lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/careers`,             lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
+    ...GUIDES.map(g => ({ url: `${BASE}/guides/${g.slug}`, lastModified: new Date(g.updated), changeFrequency: 'monthly' as const, priority: 0.7 })),
+    ...STORE_GUIDES.map(s => ({ url: `${BASE}/coupons/${s.slug}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.75 })),
   ]
 
   // SEO landing pages live at /topic/[slug]
