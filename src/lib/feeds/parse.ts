@@ -90,7 +90,9 @@ export function extractPrices(text: string): { price: number | null; original: n
   return { price, original }
 }
 
-export const RETAILERS: Array<{ slug: string; name: string; re: RegExp; country: 'US' | 'CA' | 'BOTH'; search: (q: string) => string }> = [
+export interface Retailer { slug: string; name: string; re: RegExp; country: 'US' | 'CA' | 'BOTH'; search: (q: string) => string; searchCA?: (q: string) => string }
+
+export const RETAILERS: Retailer[] = [
   { slug: 'amazon-ca', name: 'Amazon.ca', re: /amazon\.ca|amazon canada/i, country: 'CA', search: q => `https://www.amazon.ca/s?k=${encodeURIComponent(q)}` },
   { slug: 'amazon', name: 'Amazon', re: /\bamazon\b|amzn|woot/i, country: 'US', search: q => `https://www.amazon.com/s?k=${encodeURIComponent(q)}` },
   { slug: 'walmart-ca', name: 'Walmart Canada', re: /walmart\.ca|walmart canada/i, country: 'CA', search: q => `https://www.walmart.ca/search?q=${encodeURIComponent(q)}` },
@@ -98,32 +100,32 @@ export const RETAILERS: Array<{ slug: string; name: string; re: RegExp; country:
   { slug: 'bestbuy-ca', name: 'Best Buy Canada', re: /bestbuy\.ca|best buy canada/i, country: 'CA', search: q => `https://www.bestbuy.ca/en-ca/search?search=${encodeURIComponent(q)}` },
   { slug: 'bestbuy', name: 'Best Buy', re: /best ?buy/i, country: 'US', search: q => `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(q)}` },
   { slug: 'target', name: 'Target', re: /\btarget\b/i, country: 'US', search: q => `https://www.target.com/s?searchTerm=${encodeURIComponent(q)}` },
-  { slug: 'costco', name: 'Costco', re: /costco/i, country: 'BOTH', search: q => `https://www.costco.com/CatalogSearch?keyword=${encodeURIComponent(q)}` },
-  { slug: 'homedepot', name: 'The Home Depot', re: /home ?depot/i, country: 'BOTH', search: q => `https://www.homedepot.com/s/${encodeURIComponent(q)}` },
+  { slug: 'costco', name: 'Costco', re: /costco/i, country: 'BOTH', search: q => `https://www.costco.com/CatalogSearch?keyword=${encodeURIComponent(q)}`, searchCA: q => `https://www.costco.ca/CatalogSearch?keyword=${encodeURIComponent(q)}` },
+  { slug: 'homedepot', name: 'The Home Depot', re: /home ?depot/i, country: 'BOTH', search: q => `https://www.homedepot.com/s/${encodeURIComponent(q)}`, searchCA: q => `https://www.homedepot.ca/search?q=${encodeURIComponent(q)}` },
   { slug: 'lowes', name: "Lowe's", re: /lowe'?s/i, country: 'US', search: q => `https://www.lowes.com/search?searchTerm=${encodeURIComponent(q)}` },
-  { slug: 'newegg', name: 'Newegg', re: /newegg/i, country: 'BOTH', search: q => `https://www.newegg.com/p/pl?d=${encodeURIComponent(q)}` },
-  { slug: 'ebay', name: 'eBay', re: /\bebay\b/i, country: 'BOTH', search: q => `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}` },
+  { slug: 'newegg', name: 'Newegg', re: /newegg/i, country: 'BOTH', search: q => `https://www.newegg.com/p/pl?d=${encodeURIComponent(q)}`, searchCA: q => `https://www.newegg.ca/p/pl?d=${encodeURIComponent(q)}` },
+  { slug: 'ebay', name: 'eBay', re: /\bebay\b/i, country: 'BOTH', search: q => `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}`, searchCA: q => `https://www.ebay.ca/sch/i.html?_nkw=${encodeURIComponent(q)}` },
   { slug: 'macys', name: "Macy's", re: /macy'?s/i, country: 'US', search: q => `https://www.macys.com/shop/featured/${encodeURIComponent(q)}` },
   { slug: 'kohls', name: "Kohl's", re: /kohl'?s/i, country: 'US', search: q => `https://www.kohls.com/search.jsp?search=${encodeURIComponent(q)}` },
-  { slug: 'nike', name: 'Nike', re: /\bnike\b/i, country: 'BOTH', search: q => `https://www.nike.com/w?q=${encodeURIComponent(q)}` },
-  { slug: 'adidas', name: 'adidas', re: /adidas/i, country: 'BOTH', search: q => `https://www.adidas.com/us/search?q=${encodeURIComponent(q)}` },
-  { slug: 'dell', name: 'Dell', re: /\bdell\b/i, country: 'BOTH', search: q => `https://www.dell.com/en-us/search/${encodeURIComponent(q)}` },
-  { slug: 'lenovo', name: 'Lenovo', re: /lenovo\.com/i, country: 'BOTH', search: q => `https://www.lenovo.com/us/en/search?text=${encodeURIComponent(q)}` },
-  { slug: 'samsung', name: 'Samsung', re: /samsung\.com/i, country: 'BOTH', search: q => `https://www.samsung.com/us/search/searchMain/?searchTerm=${encodeURIComponent(q)}` },
+  { slug: 'nike', name: 'Nike', re: /\bnike\b/i, country: 'BOTH', search: q => `https://www.nike.com/w?q=${encodeURIComponent(q)}`, searchCA: q => `https://www.nike.com/ca/w?q=${encodeURIComponent(q)}` },
+  { slug: 'adidas', name: 'adidas', re: /adidas/i, country: 'BOTH', search: q => `https://www.adidas.com/us/search?q=${encodeURIComponent(q)}`, searchCA: q => `https://www.adidas.ca/en/search?q=${encodeURIComponent(q)}` },
+  { slug: 'dell', name: 'Dell', re: /\bdell\b/i, country: 'BOTH', search: q => `https://www.dell.com/en-us/search/${encodeURIComponent(q)}`, searchCA: q => `https://www.dell.com/en-ca/search/${encodeURIComponent(q)}` },
+  { slug: 'lenovo', name: 'Lenovo', re: /lenovo\.com/i, country: 'BOTH', search: q => `https://www.lenovo.com/us/en/search?text=${encodeURIComponent(q)}`, searchCA: q => `https://www.lenovo.com/ca/en/search?text=${encodeURIComponent(q)}` },
+  { slug: 'samsung', name: 'Samsung', re: /samsung\.com/i, country: 'BOTH', search: q => `https://www.samsung.com/us/search/searchMain/?searchTerm=${encodeURIComponent(q)}`, searchCA: q => `https://www.samsung.com/ca/search/?searchvalue=${encodeURIComponent(q)}` },
   { slug: 'gamestop', name: 'GameStop', re: /gamestop/i, country: 'US', search: q => `https://www.gamestop.com/search/?q=${encodeURIComponent(q)}` },
-  { slug: 'staples', name: 'Staples', re: /staples/i, country: 'BOTH', search: q => `https://www.staples.com/${encodeURIComponent(q)}/directory_${encodeURIComponent(q)}` },
-  { slug: 'wayfair', name: 'Wayfair', re: /wayfair/i, country: 'BOTH', search: q => `https://www.wayfair.com/keyword.php?keyword=${encodeURIComponent(q)}` },
+  { slug: 'staples', name: 'Staples', re: /staples/i, country: 'BOTH', search: q => `https://www.staples.com/${encodeURIComponent(q)}/directory_${encodeURIComponent(q)}`, searchCA: q => `https://www.staples.ca/search?query=${encodeURIComponent(q)}` },
+  { slug: 'wayfair', name: 'Wayfair', re: /wayfair/i, country: 'BOTH', search: q => `https://www.wayfair.com/keyword.php?keyword=${encodeURIComponent(q)}`, searchCA: q => `https://www.wayfair.ca/keyword.php?keyword=${encodeURIComponent(q)}` },
   { slug: 'sams-club', name: "Sam's Club", re: /sam'?s club/i, country: 'US', search: q => `https://www.samsclub.com/s/${encodeURIComponent(q)}` },
   { slug: 'canadiantire', name: 'Canadian Tire', re: /canadian tire/i, country: 'CA', search: q => `https://www.canadiantire.ca/en/search-results.html?q=${encodeURIComponent(q)}` },
   { slug: 'the-source', name: 'The Source', re: /\bthe source\b/i, country: 'CA', search: q => `https://www.thesource.ca/en-ca/search?text=${encodeURIComponent(q)}` },
   { slug: 'sportchek', name: 'Sport Chek', re: /sport ?chek/i, country: 'CA', search: q => `https://www.sportchek.ca/search.html?q=${encodeURIComponent(q)}` },
   { slug: 'shoppers', name: 'Shoppers Drug Mart', re: /shoppers drug mart/i, country: 'CA', search: q => `https://shop.shoppersdrugmart.ca/search?text=${encodeURIComponent(q)}` },
-  { slug: 'apple', name: 'Apple', re: /apple store|apple\.com/i, country: 'BOTH', search: q => `https://www.apple.com/us/search/${encodeURIComponent(q)}` },
+  { slug: 'apple', name: 'Apple', re: /apple store|apple\.com/i, country: 'BOTH', search: q => `https://www.apple.com/us/search/${encodeURIComponent(q)}`, searchCA: q => `https://www.apple.com/ca/search/${encodeURIComponent(q)}` },
   { slug: 'steam', name: 'Steam', re: /\[steam\]|\(steam\)|store\.steampowered|\bon steam\b|\bsteam (?:store|key|sale)\b/i, country: 'BOTH', search: q => `https://store.steampowered.com/search/?term=${encodeURIComponent(q)}` },
   { slug: 'gog', name: 'GOG', re: /\[gog\]|\bgog\.com\b|\bon gog\b/i, country: 'BOTH', search: q => `https://www.gog.com/en/games?query=${encodeURIComponent(q)}` },
   { slug: 'epic-games', name: 'Epic Games Store', re: /epic games(?: store)?|\[egs\]/i, country: 'BOTH', search: q => `https://store.epicgames.com/en-US/browse?q=${encodeURIComponent(q)}` },
-  { slug: 'playstation-store', name: 'PlayStation Store', re: /playstation store|\[psn\]/i, country: 'BOTH', search: q => `https://store.playstation.com/en-us/search/${encodeURIComponent(q)}` },
-  { slug: 'nintendo-eshop', name: 'Nintendo eShop', re: /\beshop\b/i, country: 'BOTH', search: q => `https://www.nintendo.com/us/search/#q=${encodeURIComponent(q)}` },
+  { slug: 'playstation-store', name: 'PlayStation Store', re: /playstation store|\[psn\]/i, country: 'BOTH', search: q => `https://store.playstation.com/en-us/search/${encodeURIComponent(q)}`, searchCA: q => `https://store.playstation.com/en-ca/search/${encodeURIComponent(q)}` },
+  { slug: 'nintendo-eshop', name: 'Nintendo eShop', re: /\beshop\b/i, country: 'BOTH', search: q => `https://www.nintendo.com/us/search/#q=${encodeURIComponent(q)}`, searchCA: q => `https://www.nintendo.com/en-ca/search/#q=${encodeURIComponent(q)}` },
 ]
 
 /** Texts are checked in priority order (feed's retailer field, then headline, then body). */
@@ -136,11 +138,13 @@ export function findRetailer(...texts: Array<string | null | undefined>) {
   return null
 }
 
-/** Same as findRetailer, but swaps to the Canadian storefront when the source is Canadian. */
-export function findRetailerFor(country: 'US' | 'CA' | 'BOTH', ...texts: Array<string | null | undefined>) {
+/** Same as findRetailer, but swaps to the Canadian storefront (or Canadian search URL) when the source is Canadian. */
+export function findRetailerFor(country: 'US' | 'CA' | 'BOTH', ...texts: Array<string | null | undefined>): Retailer | null {
   const r = findRetailer(...texts)
   if (!r || country !== 'CA' || r.country === 'CA') return r
-  return RETAILERS.find(x => x.slug === `${r.slug}-ca`) || r
+  const caStore = RETAILERS.find(x => x.slug === `${r.slug}-ca`)
+  if (caStore) return caStore
+  return r.searchCA ? { ...r, search: r.searchCA } : r
 }
 
 const CATEGORY_RULES: Array<[string, RegExp]> = [
