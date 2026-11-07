@@ -1,33 +1,26 @@
-'use client'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
 
 export default function DealTicker({ deals }: { deals: Deal[] }) {
-  if (!deals.length) return null
-
-  const items = [...deals, ...deals] // duplicate for seamless loop
-
+  const list = deals.filter(d => d.deal_price !== null)
+  if (!list.length) return null
+  const items = [...list, ...list] // duplicate for a seamless loop
   return (
-    <div className="bg-brand-red overflow-hidden py-2 relative">
-      <div className="flex animate-ticker whitespace-nowrap">
-        {items.map((deal, i) => (
-          <a
-            key={i}
-            href={deal.affiliate_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 text-white text-xs font-bold
-                       hover:text-black transition-colors flex-shrink-0"
-          >
-            <span className="text-white/60">•</span>
-            <span className="uppercase tracking-wider">{deal.retailer_name}</span>
-            <span className="text-white/80 font-normal truncate max-w-xs">{deal.title}</span>
-            <span className="bg-white/20 text-white px-2 py-0.5 rounded font-black">
-              -{deal.discount_percent || Math.round(((deal.original_price! - deal.deal_price) / deal.original_price!) * 100)}%
-            </span>
-            <span className="font-black">{formatPrice(deal.deal_price, deal.country)}</span>
-          </a>
-        ))}
+    <div className="bg-accent overflow-hidden py-2 relative" aria-label="Deal ticker">
+      <div className="flex animate-ticker whitespace-nowrap hover:[animation-play-state:paused]">
+        {items.map((deal, i) => {
+          const pct = deal.discount_percent || (deal.original_price ? Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100) : 0)
+          const href = deal.is_live ? deal.out_url! : `/deal/${deal.id}`
+          return (
+            <a key={i} href={href} target={deal.is_live ? '_blank' : undefined} rel={deal.is_live ? 'noopener sponsored' : undefined}
+              className="inline-flex items-center gap-2 px-6 text-white text-xs font-medium hover:underline flex-shrink-0">
+              <span className="uppercase tracking-wider opacity-80">{deal.retailer_name}</span>
+              <span className="font-normal truncate max-w-xs">{deal.title}</span>
+              {pct > 0 && <span className="bg-white/20 px-2 py-0.5 rounded">-{pct}%</span>}
+              <span className="font-mono">{formatPrice(deal.deal_price, deal.country)}</span>
+            </a>
+          )
+        })}
       </div>
     </div>
   )

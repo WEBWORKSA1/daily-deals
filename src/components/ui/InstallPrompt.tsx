@@ -56,10 +56,10 @@ export default function InstallPrompt() {
       <div className="flex items-start gap-3">
         <img src="/icon.svg" alt="" className="w-12 h-12 rounded flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="font-heading font-900 text-base">Install Daily.Deals</div>
+          <div className="font-heading font-medium text-base">Install Daily.Deals</div>
           {isIOS ? (
             <p className="text-xs mt-1 text-gray-700">
-              Tap <span className="font-bold">Share</span> ⬆️ then <span className="font-bold">Add to Home Screen</span>
+              Tap <span className="font-bold">Share</span> then <span className="font-bold">Add to Home Screen</span>
             </p>
           ) : (
             <p className="text-xs mt-1 text-gray-700">

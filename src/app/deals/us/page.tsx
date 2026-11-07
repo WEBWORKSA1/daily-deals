@@ -1,38 +1,27 @@
 import { Metadata } from 'next'
-import { supabase } from '@/lib/db'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import DealSection from '@/components/ui/DealSection'
+import DealListing from '@/components/ui/DealListing'
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Best US Deals Today | Daily.Deals' }
+export const revalidate = 600
 
-export default async function USDealsPage() {
-  const { data: deals } = await supabase
-    .from('deals').select('*, retailers(name, slug, brand_color, affiliate_net)')
-    .eq('is_active', true).in('country', ['US', 'BOTH'])
-    .order('discount_percent', { ascending: false }).limit(60)
+export const metadata: Metadata = {
+  title: 'Daily US Deals',
+  description: 'The best discounts from retailers shipping across the United States today — from Amazon and Walmart to Best Buy, Target and beyond.',
+  alternates: { canonical: '/deals/us' },
+}
 
-  const dealList = (deals || []).map((d: any) => ({
-    ...d, retailer_name: d.retailers?.name, retailer_slug: d.retailers?.slug, retailer_brand_color: d.retailers?.brand_color,
-  }))
-
+export default function Page() {
   return (
-    <>
-      <Header />
-      <main>
-        <div className="bg-brand-dark-2 border-b border-white/10">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <span className="text-brand-red text-xs font-bold uppercase tracking-widest">United States</span>
-            <h1 className="font-heading text-5xl font-900 text-white uppercase mt-1">🇺🇸 Best US Deals Today</h1>
-            <p className="text-brand-gray text-sm mt-2">{dealList.length} deals from top US retailers</p>
-          </div>
-        </div>
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <DealSection title="🇺🇸 US Deals" deals={dealList} />
-        </div>
-      </main>
-      <Footer />
-    </>
+    <DealListing
+      eyebrow="DAILY US · UNITED STATES"
+      title="Daily US Deals"
+      dek="The best discounts from retailers shipping across the United States today — from Amazon and Walmart to Best Buy, Target and beyond."
+      query={{ feed: 'us' }}
+      ranked={true}
+      guideSlugs={['best-time-to-buy-calendar', 'coupon-stacking-and-cashback']}
+      explainer={[
+        { h: 'How we rank', body: 'US deals are offers from retailers that ship to US addresses. Prices are shown in US dollars and ranked by our hotness score.' },
+        { h: 'Prices change fast', body: 'Retailers set prices and stock, and both can change at any time. Always confirm the final price, shipping and return terms at checkout before you buy.' },
+      ]}
+    />
   )
 }

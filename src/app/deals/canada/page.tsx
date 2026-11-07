@@ -1,38 +1,27 @@
 import { Metadata } from 'next'
-import { supabase } from '@/lib/db'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import DealSection from '@/components/ui/DealSection'
+import DealListing from '@/components/ui/DealListing'
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Best Canadian Deals Today | Daily.Deals' }
+export const revalidate = 600
 
-export default async function CanadaDealsPage() {
-  const { data: deals } = await supabase
-    .from('deals').select('*, retailers(name, slug, brand_color, affiliate_net)')
-    .eq('is_active', true).in('country', ['CA', 'BOTH'])
-    .order('discount_percent', { ascending: false }).limit(60)
+export const metadata: Metadata = {
+  title: 'Daily Canadian Deals',
+  description: 'Today’s best prices from Canadian storefronts — Amazon.ca, Walmart Canada, Best Buy Canada, Canadian Tire and more, in Canadian dollars.',
+  alternates: { canonical: '/deals/canada' },
+}
 
-  const dealList = (deals || []).map((d: any) => ({
-    ...d, retailer_name: d.retailers?.name, retailer_slug: d.retailers?.slug, retailer_brand_color: d.retailers?.brand_color,
-  }))
-
+export default function Page() {
   return (
-    <>
-      <Header />
-      <main>
-        <div className="bg-brand-dark-2 border-b border-white/10">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <span className="text-brand-red text-xs font-bold uppercase tracking-widest">Canada</span>
-            <h1 className="font-heading text-5xl font-900 text-white uppercase mt-1">🇨🇦 Best Canadian Deals Today</h1>
-            <p className="text-brand-gray text-sm mt-2">{dealList.length} deals from top Canadian retailers</p>
-          </div>
-        </div>
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <DealSection title="🇨🇦 Canadian Deals" deals={dealList} />
-        </div>
-      </main>
-      <Footer />
-    </>
+    <DealListing
+      eyebrow="DAILY CANADIAN · CANADA"
+      title="Daily Canadian Deals"
+      dek="Today’s best prices from Canadian storefronts — Amazon.ca, Walmart Canada, Best Buy Canada, Canadian Tire and more, in Canadian dollars."
+      query={{ feed: 'canada' }}
+      ranked={true}
+      guideSlugs={['canadian-shopping-guide', 'price-matching-guide']}
+      explainer={[
+        { h: 'How we rank', body: 'Canadian deals come from Canadian storefronts and community sources, priced in Canadian dollars. Cross-border offers are excluded so duties and exchange rates don’t surprise you.' },
+        { h: 'Prices change fast', body: 'Retailers set prices and stock, and both can change at any time. Always confirm the final price, shipping and return terms at checkout before you buy.' },
+      ]}
+    />
   )
 }

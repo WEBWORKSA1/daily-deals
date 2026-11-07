@@ -68,21 +68,21 @@ export default function SearchBar() {
           onChange={e => setQ(e.target.value)}
           onFocus={() => results && setShowDropdown(true)}
           placeholder="Search deals, stores, brands..."
-          className="input-dark pl-11 pr-4 h-10"
+          className="input-paper pl-11 pr-4 h-10"
         />
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-gray text-base pointer-events-none">
-          {loading ? '⏳' : '🔍'}
+          {loading ? '' : ''}
         </span>
       </form>
 
       {/* DROPDOWN */}
       {showDropdown && hasResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-brand-dark-3 border border-white/10
+        <div className="absolute top-full left-0 right-0 mt-2 bg-brand-dark-3 border border-rule
                         rounded-xl shadow-card z-50 max-h-[480px] overflow-y-auto">
 
           {/* CATEGORIES */}
           {results!.categories.length > 0 && (
-            <div className="px-3 py-2 border-b border-white/5">
+            <div className="px-3 py-2 border-b border-rule">
               <div className="text-brand-gray text-[10px] uppercase tracking-wider font-bold mb-1.5">
                 Categories
               </div>
@@ -101,7 +101,7 @@ export default function SearchBar() {
 
           {/* RETAILERS */}
           {results!.retailers.length > 0 && (
-            <div className="px-3 py-2 border-b border-white/5">
+            <div className="px-3 py-2 border-b border-rule">
               <div className="text-brand-gray text-[10px] uppercase tracking-wider font-bold mb-1.5">
                 Stores
               </div>
@@ -109,7 +109,7 @@ export default function SearchBar() {
                 <Link key={r.id} href={`/store/${r.slug}`}
                   className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors"
                   onClick={() => setShowDropdown(false)}>
-                  <div className="w-7 h-7 rounded bg-white/5 flex items-center justify-center text-xs"
+                  <div className="w-7 h-7 rounded bg-paper-2 flex items-center justify-center text-xs"
                        style={{ color: r.brand_color }}>
                     {r.logo_url ? (
                       <img src={r.logo_url} alt={r.name} className="w-5 h-5 object-contain" />
@@ -117,8 +117,8 @@ export default function SearchBar() {
                       <span className="font-bold">{r.name.charAt(0)}</span>
                     )}
                   </div>
-                  <span className="text-sm text-white">{r.name}</span>
-                  <span className="text-xs ml-auto">{r.country === 'CA' ? '🇨🇦' : '🇺🇸'}</span>
+                  <span className="text-sm text-ink">{r.name}</span>
+                  <span className="text-xs ml-auto">{r.country === 'CA' ? '' : ''}</span>
                 </Link>
               ))}
             </div>
@@ -138,11 +138,11 @@ export default function SearchBar() {
                     {d.image_url ? (
                       <img src={d.image_url} alt={d.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-base">🛍️</div>
+                      <div className="w-full h-full flex items-center justify-center text-base"></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs text-white line-clamp-1">{d.title}</div>
+                    <div className="text-xs text-ink line-clamp-1">{d.title}</div>
                     <div className="flex items-center gap-2 text-[10px] mt-0.5">
                       <span className="text-brand-red font-bold">${d.deal_price}</span>
                       {d.discount_percent && (
@@ -166,7 +166,7 @@ export default function SearchBar() {
 
       {/* NO RESULTS */}
       {showDropdown && results && !hasResults && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-brand-dark-3 border border-white/10
+        <div className="absolute top-full left-0 right-0 mt-2 bg-brand-dark-3 border border-rule
                         rounded-xl shadow-card z-50 px-4 py-6 text-center">
           <div className="text-brand-gray text-sm">No matches for "{q}"</div>
           <div className="text-brand-gray text-xs mt-1">Try a different search term</div>

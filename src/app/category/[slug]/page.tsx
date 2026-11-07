@@ -1,97 +1,43 @@
 import { Metadata } from 'next'
-import { supabase } from '@/lib/db'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import DealSection from '@/components/ui/DealSection'
-import { CATEGORIES } from '@/lib/utils'
 import { notFound } from 'next/navigation'
+import { CATEGORIES } from '@/lib/utils'
+import DealListing from '@/components/ui/DealListing'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 600
 
 interface Props { params: { slug: string } }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const cat = CATEGORIES.find(c => c.slug === params.slug)
-  if (!cat) return { title: 'Category Not Found' }
-  return { title: `${cat.label} Deals | Daily.Deals` }
+const GUIDE_MAP: Record<string, string[]> = {
+  electronics: ['tv-buying-guide', 'laptop-buying-guide', 'open-box-refurbished-guide'],
+  gaming: ['big-online-sales-events-guide', 'black-friday-cyber-monday-playbook'],
+  'home-kitchen': ['best-time-to-buy-calendar', 'price-matching-guide'],
+  grocery: ['grocery-savings-guide', 'coupon-stacking-and-cashback'],
 }
 
-export default async function CategoryPage({ params }: Props) {
+export function generateStaticParams() { return CATEGORIES.map(c => ({ slug: c.slug })) }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const cat = CATEGORIES.find(c => c.slug === params.slug)
+  if (!cat) return { title: 'Category not found' }
+  return {
+    title: `${cat.label} Deals Today — Best ${cat.label} Discounts`,
+    description: `Today’s best ${cat.label.toLowerCase()} deals from major US and Canadian retailers, ranked by real savings and refreshed throughout the day.`,
+    alternates: { canonical: `/category/${cat.slug}` },
+  }
+}
+
+export default function CategoryPage({ params }: Props) {
   const cat = CATEGORIES.find(c => c.slug === params.slug)
   if (!cat) notFound()
-
-  // Map slug to exact category name in DB
-  const categoryMap: Record<string, string[]> = {
-    'electronics':     ['Electronics'],
-    'fashion':         ['Fashion'],
-    'home-kitchen':    ['Home & Kitchen'],
-    'sports-outdoors': ['Sports', 'Sports & Outdoors', 'Outdoor'],
-    'grocery':         ['Grocery'],
-    'beauty':          ['Beauty'],
-    'gaming':          ['Gaming'],
-    'tools':           ['Tools'],
-    'automotive':      ['Automotive'],
-    'office':          ['Office'],
-  }
-
-  const categories = categoryMap[params.slug] || [cat.label]
-
-  let q = supabase
-    .from('deals')
-    .select('*, retailers(name, slug, brand_color, affiliate_net)')
-    .eq('is_active', true)
-    .order('discount_percent', { ascending: false })
-    .limit(40)
-
-  // Filter by any matching category name
-  if (categories.length === 1) {
-    q = q.eq('category', categories[0])
-  } else {
-    q = q.in('category', categories)
-  }
-
-  const { data: deals } = await q
-
-  const dealList = (deals || []).map((d: any) => ({
-    ...d,
-    retailer_name: d.retailers?.name,
-    retailer_slug: d.retailers?.slug,
-    retailer_brand_color: d.retailers?.brand_color,
-  }))
-
   return (
-    <>
-      <Header />
-      <main>
-        <div className="bg-brand-dark-2 border-b border-white/10">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-brand-red/15 border border-brand-red/25 rounded-2xl
-                              flex items-center justify-center text-3xl">
-                {cat.icon}
-              </div>
-              <div>
-                <span className="text-brand-red text-xs font-bold uppercase tracking-widest">Category</span>
-                <h1 className="font-heading text-4xl font-900 text-white uppercase">{cat.label} Deals</h1>
-                <p className="text-brand-gray text-sm mt-1">{dealList.length} deals available</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {dealList.length > 0 ? (
-            <DealSection title={`${cat.icon} ${cat.label} Deals`} deals={dealList} />
-          ) : (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4 opacity-30">{cat.icon}</div>
-              <h2 className="font-heading text-2xl text-white uppercase mb-2">No {cat.label} Deals Right Now</h2>
-              <p className="text-brand-gray">Check back soon — deals are updated every 24 hours.</p>
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </>
+    <DealListing
+      eyebrow={`CATEGORY · ${cat.label.toUpperCase()}`}
+      title={`${cat.label} Deals`}
+      dek={`The best ${cat.label.toLowerCase()} deals we can find right now across the US and Canada — scored, de-duplicated and refreshed all day.`}
+      query={{ category: cat.slug }}
+      ranked
+      guideSlugs={GUIDE_MAP[cat.slug]}
+      explainer={[{ h: 'How we sort this category', body: 'Deals are classified by product type and ranked by discount depth, freshness and price credibility. Items without a believable comparison price rank lower.' }]}
+    />
   )
 }

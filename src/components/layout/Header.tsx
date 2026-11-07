@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { useLocation } from '@/hooks/useLocation'
 import { CATEGORIES } from '@/lib/utils'
 import SearchBar from '@/components/ui/SearchBar'
+import { NAV_PRIMARY } from '@/lib/site'
 
 function formatToday() {
   const d = new Date()
   const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY']
   const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER']
-  // \u00B7 = middle dot — here it's a JS string literal, so the escape resolves correctly.
-  return `${days[d.getDay()]} \u00B7 ${months[d.getMonth()]} ${d.getDate()} \u00B7 ${d.getFullYear()}`
+  // · = middle dot — here it's a JS string literal, so the escape resolves correctly.
+  return `${days[d.getDay()]} · ${months[d.getMonth()]} ${d.getDate()} · ${d.getFullYear()}`
 }
 
 export default function Header() {
@@ -47,8 +48,8 @@ export default function Header() {
       {/* DATE STAMP — editorial spine */}
       <div className="bg-white border-b border-rule">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between">
-          <span className="text-[11px] tracking-[0.2em] text-ink-muted">{today || '\u00A0'}</span>
-          <span className="text-[11px] tracking-[0.15em] text-ink-muted">DAILY EDITION — US &amp; CANADA</span>
+          <span className="text-[11px] tracking-[0.2em] text-ink-muted">{today || ' '}</span>
+          <span className="hidden sm:inline text-[11px] tracking-[0.15em] text-ink-muted">DAILY EDITION — US &amp; CANADA</span>
         </div>
       </div>
 
@@ -77,7 +78,7 @@ export default function Header() {
               >
                 <span aria-hidden>◎</span>
                 <span className="max-w-[140px] truncate">
-                  {loading ? 'Detecting…' : location ? `${location.city}, ${location.stateCode}` : 'Set your location'}
+                  {location ? `${location.city}, ${location.stateCode}` : loading ? 'Your area' : 'Set your location'}
                 </span>
               </button>
 
@@ -119,8 +120,8 @@ export default function Header() {
                 </Link>
               )}
 
-              <Link href="/deals/hot" className="btn-primary hidden sm:inline-flex">
-                Browse deals →
+              <Link href="/concierge" className="btn-primary hidden sm:inline-flex">
+                Get deal alerts →
               </Link>
             </div>
           </div>
@@ -130,11 +131,9 @@ export default function Header() {
         <div className="border-t border-rule bg-white">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-5 overflow-x-auto py-2.5 scrollbar-hide text-[12px]">
-              <Link href="/deals/hot" className="flex-shrink-0 font-medium text-ink whitespace-nowrap">Daily Hot</Link>
-              <Link href="/deals/flash" className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">Daily Flash</Link>
-              <Link href="/deals/clearance" className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">Daily Clearance</Link>
-              <Link href="/for-you" className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">For You</Link>
-              <Link href="/cashback" className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">Cashback</Link>
+              {NAV_PRIMARY.map(([label, href], i) => (
+                <Link key={href} href={href} className={`flex-shrink-0 whitespace-nowrap hover:text-accent ${i === 0 ? 'font-medium text-ink' : 'text-ink-2'}`}>{label}</Link>
+              ))}
               <span className="flex-shrink-0 text-rule" aria-hidden>|</span>
               {CATEGORIES.map(cat => (
                 <Link key={cat.slug} href={`/category/${cat.slug}`} className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">
@@ -143,7 +142,7 @@ export default function Header() {
               ))}
               <span className="flex-shrink-0 text-rule" aria-hidden>|</span>
               <Link href="/stores" className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">All Stores</Link>
-              <Link href="/extension" className="flex-shrink-0 text-ink-2 hover:text-ink whitespace-nowrap">Extension</Link>
+              <Link href="/support" className="flex-shrink-0 text-accent hover:text-accent-dark whitespace-nowrap">Support Us</Link>
             </div>
           </div>
         </div>

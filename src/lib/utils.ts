@@ -1,7 +1,7 @@
 import { Deal, AffiliateNet } from '@/types'
 
-const AMAZON_US_TAG = process.env.NEXT_PUBLIC_AMAZON_US_TAG || 'dailydeals-us-20'
-const AMAZON_CA_TAG = process.env.NEXT_PUBLIC_AMAZON_CA_TAG || 'dailydeals-ca-20'
+const AMAZON_US_TAG = process.env.NEXT_PUBLIC_AMAZON_US_TAG || 'dailydeal0dbc-20'
+const AMAZON_CA_TAG = process.env.NEXT_PUBLIC_AMAZON_CA_TAG || AMAZON_US_TAG
 
 // Skimlinks publisher ID. Pattern A redirect URL works without an API key.
 const SKIMLINKS_ID = process.env.NEXT_PUBLIC_SKIMLINKS_ID
@@ -57,7 +57,8 @@ export function buildAffiliateLink(deal: Deal, affiliateNet: AffiliateNet): stri
 }
 
 export function formatPrice(price: number, country: string): string {
-  return new Intl.NumberFormat('en-CA', {
+  if (price === 0) return 'FREE'
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: country === 'CA' ? 'CAD' : 'USD',
     minimumFractionDigits: 0,
@@ -80,14 +81,15 @@ export function slugToTitle(slug: string): string {
 }
 
 export const CATEGORIES = [
-  { slug: 'electronics',     label: 'Electronics',    icon: '💻' },
-  { slug: 'fashion',         label: 'Fashion',         icon: '👗' },
-  { slug: 'home-kitchen',    label: 'Home & Kitchen',  icon: '🏠' },
-  { slug: 'sports-outdoors', label: 'Sports',          icon: '⚽' },
-  { slug: 'grocery',         label: 'Grocery',         icon: '🛒' },
-  { slug: 'beauty',          label: 'Beauty',          icon: '💄' },
-  { slug: 'gaming',          label: 'Gaming',          icon: '🎮' },
-  { slug: 'tools',           label: 'Tools',           icon: '🔧' },
-  { slug: 'automotive',      label: 'Automotive',      icon: '🚗' },
-  { slug: 'office',          label: 'Office',          icon: '🖥️' },
+  { slug: 'electronics',     label: 'Electronics',    icon: '' },
+  { slug: 'fashion',         label: 'Fashion',         icon: '' },
+  { slug: 'home-kitchen',    label: 'Home & Kitchen',  icon: '' },
+  { slug: 'sports-outdoors', label: 'Sports',          icon: '' },
+  { slug: 'grocery',         label: 'Grocery',         icon: '' },
+  { slug: 'beauty',          label: 'Beauty',          icon: '' },
+  { slug: 'gaming',          label: 'Gaming',          icon: '' },
+  { slug: 'tools',           label: 'Tools',           icon: '' },
+  { slug: 'automotive',      label: 'Automotive',      icon: '' },
+  { slug: 'office',          label: 'Office',          icon: '' },
+  { slug: 'toys',            label: 'Toys',            icon: '' },
 ]

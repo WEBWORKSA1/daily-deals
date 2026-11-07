@@ -1,15 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 import DealCard from '@/components/deals/DealCard'
 import { Deal } from '@/types'
 import { CATEGORIES } from '@/lib/utils'
 
 const SORTS = [
   { value: 'relevance', label: 'Most Relevant' },
-  { value: 'hottest',   label: 'Hottest 🔥' },
+  { value: 'hottest',   label: 'Hottest ' },
   { value: 'discount',  label: 'Biggest Discount' },
   { value: 'newest',    label: 'Newest First' },
   { value: 'price_asc', label: 'Price: Low to High' },
@@ -74,12 +72,12 @@ export default function SearchClient() {
 
   return (
     <>
-      <Header />
+
       <main>
         {/* HEADER STRIP */}
-        <section className="bg-brand-dark-3 border-b border-white/5 py-8">
+        <section className="bg-brand-dark-3 border-b border-rule py-8">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="font-heading text-3xl font-900 text-white uppercase tracking-tight">
+            <h1 className="font-heading text-3xl font-medium text-ink uppercase tracking-tight">
               {q ? `Results for "${q}"` : 'Search Daily Deals'}
             </h1>
             <p className="text-brand-gray text-sm mt-1">
@@ -94,9 +92,9 @@ export default function SearchClient() {
                   value={q}
                   onChange={e => setQ(e.target.value)}
                   placeholder="Search deals, stores, brands..."
-                  className="input-dark pl-11 pr-24 h-12"
+                  className="input-paper pl-11 pr-24 h-12"
                 />
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-gray text-base pointer-events-none">🔍</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-gray text-base pointer-events-none"></span>
                 <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 btn-primary h-9 px-4 text-xs">
                   Search
                 </button>
@@ -109,9 +107,9 @@ export default function SearchClient() {
 
           {/* FILTERS SIDEBAR */}
           <aside className="space-y-6">
-            <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-4">
+            <div className="bg-brand-dark-3 border border-rule rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-bold text-sm uppercase tracking-wider">Filters</h3>
+                <h3 className="text-ink font-bold text-sm uppercase tracking-wider">Filters</h3>
                 {hasFilters && (
                   <button onClick={clearFilters} className="text-brand-red text-xs hover:underline">
                     Clear
@@ -123,7 +121,7 @@ export default function SearchClient() {
               <div className="mb-4">
                 <label className="text-brand-gray text-xs uppercase tracking-wider block mb-1.5">Sort</label>
                 <select value={sort} onChange={e => setSort(e.target.value)}
-                  className="input-dark w-full text-sm h-9">
+                  className="input-paper w-full text-sm h-9">
                   {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
               </div>
@@ -133,15 +131,15 @@ export default function SearchClient() {
                 <label className="text-brand-gray text-xs uppercase tracking-wider block mb-1.5">Country</label>
                 <div className="grid grid-cols-3 gap-1">
                   {[
-                    { value: '',  label: 'All',  emoji: '🌎' },
-                    { value: 'US',label: 'US',   emoji: '🇺🇸' },
-                    { value: 'CA',label: 'CA',   emoji: '🇨🇦' },
+                    { value: '',  label: 'All',  emoji: '' },
+                    { value: 'US',label: 'US',   emoji: '' },
+                    { value: 'CA',label: 'CA',   emoji: '' },
                   ].map(c => (
                     <button key={c.value || 'all'} onClick={() => setCountry(c.value)}
                       className={`text-xs py-2 rounded-md border transition-colors ${
                         country === c.value
                           ? 'bg-brand-red/20 border-brand-red text-brand-red font-bold'
-                          : 'bg-white/5 border-white/10 text-brand-gray-2 hover:bg-white/10'
+                          : 'bg-paper-2 border-rule text-brand-gray-2 hover:bg-white/10'
                       }`}>
                       {c.emoji} {c.label}
                     </button>
@@ -168,7 +166,7 @@ export default function SearchClient() {
                   Max Price: {maxPrice >= 999999 ? 'Any' : `$${maxPrice}`}
                 </label>
                 <select value={maxPrice} onChange={e => setMaxPrice(parseFloat(e.target.value))}
-                  className="input-dark w-full text-sm h-9">
+                  className="input-paper w-full text-sm h-9">
                   <option value={999999}>Any price</option>
                   <option value={25}>Under $25</option>
                   <option value={50}>Under $50</option>
@@ -211,13 +209,13 @@ export default function SearchClient() {
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="bg-brand-dark-3 border border-white/5 rounded-xl h-72 animate-pulse" />
+                  <div key={i} className="bg-brand-dark-3 border border-rule rounded-xl h-72 animate-pulse" />
                 ))}
               </div>
             ) : results.length === 0 ? (
-              <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-12 text-center">
-                <div className="text-5xl mb-3">🔍</div>
-                <h3 className="text-white text-lg font-bold mb-2">No deals match your search</h3>
+              <div className="bg-brand-dark-3 border border-rule rounded-xl p-12 text-center">
+                <div className="text-5xl mb-3"></div>
+                <h3 className="text-ink text-lg font-bold mb-2">No deals match your search</h3>
                 <p className="text-brand-gray text-sm mb-4">
                   {q ? `No results for "${q}"` : 'Try adjusting your filters'}
                 </p>
@@ -236,7 +234,7 @@ export default function SearchClient() {
 
         </div>
       </main>
-      <Footer />
+
     </>
   )
 }

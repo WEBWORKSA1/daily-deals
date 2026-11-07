@@ -48,13 +48,13 @@ export default function LocalDealsSection() {
         <div className="flex items-center gap-3">
           <div className="w-1 h-8 rounded-full bg-brand-red" />
           <div>
-            <h2 className="font-heading text-2xl sm:text-3xl font-900 text-white uppercase tracking-tight">
-              📍 Daily Local Deals
+            <h2 className="font-heading text-2xl sm:text-3xl font-medium text-ink uppercase tracking-tight">
+              Daily Local Deals
             </h2>
             {hasLocation && location ? (
               <p className="text-brand-gray text-xs mt-0.5">
-                Deals for <span className="text-white font-semibold">{location.city}, {location.stateCode}</span>
-                {location.country === 'CA' ? ' 🇨🇦' : ' 🇺🇸'}
+                Deals for <span className="text-ink font-semibold">{location.city}, {location.stateCode}</span>
+                {location.country === 'CA' ? ' ' : ' '}
                 {location.isDetected && ' · auto-detected'}
               </p>
             ) : (
@@ -74,9 +74,9 @@ export default function LocalDealsSection() {
 
       {/* PROMPT (when no location) */}
       {showFullPrompt && (
-        <div className="bg-brand-dark-3 border-2 border-dashed border-white/15 rounded-2xl p-8 mb-6 text-center">
-          <div className="text-4xl mb-3">📍</div>
-          <h3 className="font-heading text-xl font-900 text-white uppercase tracking-tight mb-2">
+        <div className="bg-brand-dark-3 border-2 border-dashed border-rule rounded-2xl p-8 mb-6 text-center">
+          <div className="text-4xl mb-3"></div>
+          <h3 className="font-heading text-xl font-medium text-ink uppercase tracking-tight mb-2">
             Set Your Location for Daily Local Deals
           </h3>
           <p className="text-brand-gray text-sm mb-5 max-w-md mx-auto">
@@ -131,8 +131,8 @@ export default function LocalDealsSection() {
 
           {/* EMPTY STATE — has location but zero deals */}
           {data && totalDealCount === 0 && (
-            <div className="bg-brand-dark-3 border border-white/10 rounded-2xl p-8 text-center">
-              <div className="text-3xl mb-3 opacity-30">🗺️</div>
+            <div className="bg-brand-dark-3 border border-rule rounded-2xl p-8 text-center">
+              <div className="text-3xl mb-3 opacity-30"></div>
               <p className="text-brand-gray text-sm">
                 No deals tagged for this location yet — check back soon as we expand coverage.
               </p>
@@ -149,7 +149,7 @@ export default function LocalDealsSection() {
 function TierLabel({ color, label, count }: { color: 'green' | 'blue' | 'gray', label: string, count: number }) {
   const dotColor = color === 'green' ? 'bg-brand-green' : color === 'blue' ? 'bg-brand-blue' : 'bg-brand-gray'
   return (
-    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/10">
+    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-rule">
       <span className={`w-2 h-2 rounded-full ${dotColor}`} />
       <span className="text-brand-gray-2 text-xs font-bold uppercase tracking-widest">{label}</span>
       <span className="text-brand-gray text-xs">· {count}</span>

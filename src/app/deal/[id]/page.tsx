@@ -1,7 +1,5 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 import DealCard from '@/components/deals/DealCard'
 import PriceChart from '@/components/ui/PriceChart'
 import CouponFeedback from '@/components/ui/CouponFeedback'
@@ -9,6 +7,7 @@ import Comments from '@/components/ui/Comments'
 import ShareBar from '@/components/deals/ShareBar'
 import GetDealButton from '@/components/deals/GetDealButton'
 import { supabase } from '@/lib/db'
+import { getDeals } from '@/lib/data'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
 import { hotnessTier } from '@/lib/hotness'
@@ -115,7 +114,7 @@ export default async function DealPage({ params }: Props) {
 
   // Deal doesn't exist or expired → friendly soft-404 with current top deals
   if (!deal) {
-    const recent = await getRecentDeals()
+    const recent = await getDeals({ feed: 'hot', limit: 8 })
     return <DealUnavailable reason="missing" recent={recent} />
   }
 
@@ -142,7 +141,7 @@ export default async function DealPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <Header />
+
       <main>
         {/* BREADCRUMB */}
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
@@ -326,7 +325,7 @@ export default async function DealPage({ params }: Props) {
           </aside>
         </div>
       </main>
-      <Footer />
+
     </>
   )
 }
@@ -335,16 +334,16 @@ export default async function DealPage({ params }: Props) {
 function DealUnavailable({ reason, recent }: { reason: 'bad-id' | 'missing'; recent?: Deal[] }) {
   return (
     <>
-      <Header />
+
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="section-eyebrow mb-3">404 · DEAL NOT IN TODAY&apos;S EDITION</div>
         <h1 className="font-serif text-4xl lg:text-5xl font-medium text-ink mb-4 leading-tight">
-          {reason === 'bad-id' ? 'That doesn&apos;t look like a deal.' : 'This deal isn&apos;t available right now.'}
+          {reason === 'bad-id' ? 'That doesn’t look like a deal.' : 'This deal isn’t available right now.'}
         </h1>
         <p className="text-ink-2 mb-8 max-w-xl">
           {reason === 'bad-id'
-            ? "That URL isn't a valid deal page. Try the homepage for today&apos;s editorial picks."
-            : "This deal has either expired, been pulled, or hasn&apos;t been published yet. Daily.Deals refreshes every six hours — check back soon."}
+            ? "That URL isn’t a valid deal page. Try the homepage for today’s editorial picks."
+            : "This deal has either expired, been pulled, or hasn’t been published yet. Daily.Deals refreshes continuously — here are today’s best."}
         </p>
 
         <div className="flex flex-wrap gap-3 mb-12">
@@ -362,7 +361,7 @@ function DealUnavailable({ reason, recent }: { reason: 'bad-id' | 'missing'; rec
           </div>
         )}
       </main>
-      <Footer />
+
     </>
   )
 }

@@ -2,25 +2,23 @@
 // Designed to feel like part of Daily.Deals, not a Next.js default error.
 
 import Link from 'next/link'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 
 export const metadata = {
-  title: 'Page not found — Daily.Deals',
+  title: 'Page not found',
   description: "The page you're looking for has expired or moved. Today's deals are on the homepage.",
 }
 
 export default function NotFound() {
   return (
     <>
-      <Header />
+
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
         <div className="section-eyebrow mb-3">404 · NOT IN TODAY&apos;S EDITION</div>
         <h1 className="font-serif text-5xl lg:text-6xl font-medium tracking-tight text-ink mb-4 leading-[1.05]">
           This deal isn&apos;t available right now.
         </h1>
         <p className="text-ink-2 text-base leading-relaxed mb-8 max-w-xl">
-          Deals expire fast. The page you&apos;re looking for has either ended, moved, or hasn&apos;t been published yet. Today&apos;s edition is on the homepage — fresh deals are added every six hours.
+          Deals expire fast. The page you&apos;re looking for has either ended, moved, or hasn&apos;t been published yet. Today&apos;s edition is on the homepage — fresh deals are added around the clock.
         </p>
 
         <div className="flex flex-wrap gap-3 mb-12">
@@ -47,7 +45,7 @@ export default function NotFound() {
           </div>
         </div>
       </main>
-      <Footer />
+
     </>
   )
 }

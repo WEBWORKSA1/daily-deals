@@ -1,11 +1,13 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Deal } from '@/types'
 import { formatPrice } from '@/lib/utils'
 
 export default function FeaturedDeal({ deal }: { deal: Deal }) {
   const [clicking, setClicking] = useState(false)
   const [imgFailed, setImgFailed] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+  useEffect(() => { const i = imgRef.current; if (i && i.complete && i.naturalWidth === 0) setImgFailed(true) }, [])
 
   const discount = deal.discount_percent || (deal.original_price
     ? Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100)
@@ -14,6 +16,7 @@ export default function FeaturedDeal({ deal }: { deal: Deal }) {
   const showPlaceholder = !deal.image_url || imgFailed
 
   async function handleClick() {
+    if (deal.is_live && deal.out_url) { window.open(deal.out_url, '_blank', 'noopener'); return }
     if (clicking) return
     setClicking(true)
     try {
@@ -47,6 +50,7 @@ export default function FeaturedDeal({ deal }: { deal: Deal }) {
             </div>
           ) : (
             <img
+                    ref={imgRef}
               src={deal.image_url!}
               alt={deal.title}
               onError={() => setImgFailed(true)}

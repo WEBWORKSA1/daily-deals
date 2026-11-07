@@ -1,8 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 import DealCard from '@/components/deals/DealCard'
 
 export default function AccountPage() {
@@ -49,25 +47,24 @@ export default function AccountPage() {
   if (loading) {
     return (
       <>
-        <Header />
+
         <main className="max-w-screen-2xl mx-auto px-4 py-12">
           <div className="text-center text-brand-gray">Loading...</div>
         </main>
-        <Footer />
+
       </>
     )
   }
 
   return (
     <>
-      <Header />
+
       <main>
-        <section className="bg-brand-dark-3 border-b border-white/5 py-8">
+        <section className="bg-brand-dark-3 border-b border-rule py-8">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
             <div>
-              <h1 className="font-heading text-3xl font-900 text-white uppercase">
-                Hi, {user?.username || user?.email?.split('@')[0]} 👋
-              </h1>
+              <h1 className="font-heading text-3xl font-medium text-ink uppercase">
+                Hi, {user?.username || user?.email?.split('@')[0]}               </h1>
               <p className="text-brand-gray text-sm mt-1">Manage your saved deals, alerts, and preferences.</p>
             </div>
             <button onClick={signOut} className="text-brand-gray text-xs hover:text-brand-red">
@@ -79,17 +76,17 @@ export default function AccountPage() {
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           {/* TABS */}
-          <div className="border-b border-white/5 mb-6 flex gap-1 overflow-x-auto">
+          <div className="border-b border-rule mb-6 flex gap-1 overflow-x-auto">
             {[
-              { id: 'saves',   label: '💾 Saved Deals',  count: saves.length },
-              { id: 'alerts',  label: '🔔 Alerts',       count: alerts.length },
-              { id: 'profile', label: '⚙️ Profile',      count: null },
+              { id: 'saves',   label: 'Saved Deals',  count: saves.length },
+              { id: 'alerts',  label: 'Alerts',       count: alerts.length },
+              { id: 'profile', label: 'Profile',      count: null },
             ].map((t: any) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`px-4 py-3 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${
                   tab === t.id
                     ? 'border-brand-red text-brand-red'
-                    : 'border-transparent text-brand-gray hover:text-white'
+                    : 'border-transparent text-brand-gray hover:text-accent'
                 }`}>
                 {t.label} {t.count !== null && <span className="ml-1 text-brand-gray text-xs">({t.count})</span>}
               </button>
@@ -99,9 +96,9 @@ export default function AccountPage() {
           {/* SAVES */}
           {tab === 'saves' && (
             saves.length === 0 ? (
-              <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-12 text-center">
-                <div className="text-5xl mb-3">💾</div>
-                <h3 className="text-white text-lg font-bold mb-2">No saved deals yet</h3>
+              <div className="bg-brand-dark-3 border border-rule rounded-xl p-12 text-center">
+                <div className="text-5xl mb-3"></div>
+                <h3 className="text-ink text-lg font-bold mb-2">No saved deals yet</h3>
                 <p className="text-brand-gray text-sm">Click the bookmark icon on any deal to save it here.</p>
               </div>
             ) : (
@@ -114,18 +111,18 @@ export default function AccountPage() {
           {/* ALERTS */}
           {tab === 'alerts' && (
             alerts.length === 0 ? (
-              <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-12 text-center">
-                <div className="text-5xl mb-3">🔔</div>
-                <h3 className="text-white text-lg font-bold mb-2">No alerts set up</h3>
+              <div className="bg-brand-dark-3 border border-rule rounded-xl p-12 text-center">
+                <div className="text-5xl mb-3"></div>
+                <h3 className="text-ink text-lg font-bold mb-2">No alerts set up</h3>
                 <p className="text-brand-gray text-sm">Set up alerts to be notified when matching deals appear.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {alerts.map(alert => (
                   <div key={alert.id}
-                    className="bg-brand-dark-3 border border-white/5 rounded-lg p-4 flex items-center gap-4">
+                    className="bg-brand-dark-3 border border-rule rounded-lg p-4 flex items-center gap-4">
                     <div className="flex-1">
-                      <div className="text-white text-sm font-bold">
+                      <div className="text-ink text-sm font-bold">
                         {alert.keyword && <span>"{alert.keyword}"</span>}
                         {alert.retailer_slug && <span className="ml-2 text-brand-red">at {alert.retailer_slug}</span>}
                         {alert.category && <span className="ml-2 text-brand-gold">in {alert.category}</span>}
@@ -147,24 +144,24 @@ export default function AccountPage() {
 
           {/* PROFILE */}
           {tab === 'profile' && (
-            <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6 max-w-2xl">
-              <h3 className="text-white font-bold mb-4">Profile</h3>
+            <div className="bg-brand-dark-3 border border-rule rounded-xl p-6 max-w-2xl">
+              <h3 className="text-ink font-bold mb-4">Profile</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between border-b border-white/5 pb-3">
+                <div className="flex justify-between border-b border-rule pb-3">
                   <span className="text-brand-gray">Email</span>
-                  <span className="text-white">{user.email}</span>
+                  <span className="text-ink">{user.email}</span>
                 </div>
-                <div className="flex justify-between border-b border-white/5 pb-3">
+                <div className="flex justify-between border-b border-rule pb-3">
                   <span className="text-brand-gray">Username</span>
-                  <span className="text-white">{user.username || '—'}</span>
+                  <span className="text-ink">{user.username || '—'}</span>
                 </div>
-                <div className="flex justify-between border-b border-white/5 pb-3">
+                <div className="flex justify-between border-b border-rule pb-3">
                   <span className="text-brand-gray">Karma</span>
                   <span className="text-brand-red font-bold">{user.karma_score || 0}</span>
                 </div>
-                <div className="flex justify-between border-b border-white/5 pb-3">
+                <div className="flex justify-between border-b border-rule pb-3">
                   <span className="text-brand-gray">Country</span>
-                  <span className="text-white">{user.country === 'CA' ? '🇨🇦 Canada' : '🇺🇸 United States'}</span>
+                  <span className="text-ink">{user.country === 'CA' ? 'Canada' : 'United States'}</span>
                 </div>
               </div>
             </div>
@@ -172,7 +169,7 @@ export default function AccountPage() {
 
         </div>
       </main>
-      <Footer />
+
     </>
   )
 }

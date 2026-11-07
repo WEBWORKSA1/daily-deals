@@ -1,90 +1,45 @@
 import { Metadata } from 'next'
-import { supabase } from '@/lib/db'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
+import { getRetailers } from '@/lib/data'
+import { STORE_GUIDES } from '@/lib/stores'
+import { PageHero, SectionHead, DealHubs } from '@/components/ui/Editorial'
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'All Stores | Daily.Deals' }
+export const revalidate = 3600
+export const metadata: Metadata = {
+  title: 'All Stores — Deals & Coupons by Retailer',
+  description: 'Browse deals, coupons and savings guides for major US and Canadian retailers including Amazon, Walmart, Best Buy, Target, Costco, Home Depot and Canadian Tire.',
+  alternates: { canonical: '/stores' },
+}
 
 export default async function StoresPage() {
-  const { data: retailers } = await supabase
-    .from('retailers').select('*').eq('is_active', true).order('name')
-
-  const usStores = (retailers || []).filter(r => r.country === 'US' || r.country === 'BOTH')
-  const caStores = (retailers || []).filter(r => r.country === 'CA' || r.country === 'BOTH')
-
+  const db = (await getRetailers(200)) as any[]
+  const map = new Map<string, { slug: string; name: string; country: string }>()
+  STORE_GUIDES.forEach(s => map.set(s.slug, { slug: s.slug, name: s.name, country: s.country }))
+  db.forEach(r => { if (!map.has(r.slug)) map.set(r.slug, { slug: r.slug, name: r.name, country: r.country }) })
+  const all = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name))
+  const group = (c: string) => all.filter(s => s.country === c || s.country === 'BOTH')
   return (
-    <>
-      <Header />
-      <main>
-        <div className="bg-brand-dark-2 border-b border-white/10">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <span className="text-brand-red text-xs font-bold uppercase tracking-widest">Browse</span>
-            <h1 className="font-heading text-5xl font-900 text-white uppercase mt-1">All Stores</h1>
-            <p className="text-brand-gray text-sm mt-2">{retailers?.length || 0} retailers across US & Canada</p>
-          </div>
-        </div>
-
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
-
-          {/* US STORES */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-8 rounded-full bg-brand-red" />
-              <h2 className="font-heading text-2xl font-900 text-white uppercase">🇺🇸 US Retailers</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {usStores.map(r => (
-                <Link key={r.id} href={`/store/${r.slug}`}
-                  className="flex flex-col items-center gap-3 p-5 bg-brand-dark-3
-                             border border-white/10 rounded-xl hover:border-brand-red/40
-                             hover:bg-brand-dark-4 transition-all group">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center
-                                  text-white text-2xl font-black"
-                    style={{ backgroundColor: r.brand_color || '#333' }}>
-                    {r.name.charAt(0)}
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-sm font-semibold group-hover:text-brand-red
-                                    transition-colors line-clamp-1">{r.name}</div>
-                    <div className="text-brand-gray text-xs mt-0.5">{r.category}</div>
-                  </div>
+    <main>
+      <PageHero eyebrow="DIRECTORY" title="Deals by store" dek="Every retailer we track, with live deals, coupon strategy and the best times to buy." />
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        {(['US', 'CA'] as const).map((c, i) => (
+          <section key={c}>
+            <SectionHead n={`0${i + 1}`} eyebrow={c === 'US' ? 'UNITED STATES' : 'CANADA'} title={c === 'US' ? 'US retailers' : 'Canadian retailers'} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-px bg-rule border border-rule">
+              {group(c).map(s => (
+                <Link key={s.slug + c} href={`/store/${s.slug}`} className="bg-white p-5 hover:bg-paper-2 group">
+                  <div className="font-serif text-lg text-ink group-hover:text-accent leading-tight">{s.name}</div>
+                  <div className="text-[11px] text-ink-muted tracking-wider mt-1">DEALS →</div>
                 </Link>
               ))}
             </div>
           </section>
-
-          {/* CANADIAN STORES */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1 h-8 rounded-full bg-brand-red" />
-              <h2 className="font-heading text-2xl font-900 text-white uppercase">🇨🇦 Canadian Retailers</h2>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {caStores.map(r => (
-                <Link key={r.id} href={`/store/${r.slug}`}
-                  className="flex flex-col items-center gap-3 p-5 bg-brand-dark-3
-                             border border-white/10 rounded-xl hover:border-brand-red/40
-                             hover:bg-brand-dark-4 transition-all group">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center
-                                  text-white text-2xl font-black"
-                    style={{ backgroundColor: r.brand_color || '#333' }}>
-                    {r.name.charAt(0)}
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-sm font-semibold group-hover:text-brand-red
-                                    transition-colors line-clamp-1">{r.name}</div>
-                    <div className="text-brand-gray text-xs mt-0.5">{r.category}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-        </div>
-      </main>
-      <Footer />
-    </>
+        ))}
+        <section>
+          <SectionHead n="03" eyebrow="OFFICIAL DEAL PAGES" title="Straight from the retailers" />
+          <DealHubs />
+        </section>
+      </div>
+    </main>
   )
 }

@@ -104,30 +104,42 @@ function summarizeForCurator(d: RawDeal): string {
   ].filter(Boolean).join('\n')
 }
 
+// ── Rule-based fallback curator ────────────────────────────────────────────
+// Used when ANTHROPIC_API_KEY is absent or the API errors, so the pipeline never
+// silently rejects everything (the root cause of the empty homepage).
+const KNOWN_BRANDS = /\b(apple|samsung|sony|lg|bose|dyson|nike|adidas|kitchenaid|ninja|instant pot|lenovo|dell|hp|asus|acer|microsoft|nintendo|playstation|xbox|anker|logitech|shark|irobot|roomba|dewalt|milwaukee|makita|ryobi|craftsman|le creuset|lodge|vitamix|breville|keurig|nespresso|philips|panasonic|tcl|hisense|vizio|google|amazon|fire tv|kindle|ring|eufy|jbl|beats|sennheiser|garmin|fitbit|yeti|stanley|columbia|north face|patagonia|levi|under armour|lululemon|lego|hasbro|mattel|cuisinart|oxo|t-fal|corsair|razer|western digital|sandisk|crucial|seagate|intel|amd|nvidia)\b/i
+
+export function ruleJudge(d: RawDeal): CuratorJudgement {
+  const pct = d.discount_percent ?? (d.original_price ? Math.round(((d.original_price - d.deal_price) / d.original_price) * 100) : null)
+  const brand = KNOWN_BRANDS.test(`${d.title} ${d.description || ''}`)
+  const discount_reality = pct === null ? 12 : pct > 85 ? 4 : pct >= 10 ? Math.min(28, 14 + Math.round(pct / 4)) : 10
+  const product_quality = brand ? 22 : 14
+  const price_competitiveness = 13 + (pct && pct >= 30 && pct <= 85 ? 6 : pct && pct >= 15 ? 3 : 0)
+  const urgency_legitimacy = d.deal_type === 'flash' && d.expires_at ? 9 : 7
+  const user_value = (brand ? 4 : 2) + (pct && pct >= 25 && pct <= 85 ? 4 : 2)
+  const score = discount_reality + product_quality + price_competitiveness + urgency_legitimacy + user_value
+  return {
+    score,
+    publish: score >= 62 && !!d.title && d.deal_price > 0,
+    reasoning: `Rule-based curator: ${pct ?? 'n/a'}% off, ${brand ? 'recognized brand' : 'unrecognized brand'}.`,
+    scores: { discount_reality, product_quality, price_competitiveness, urgency_legitimacy, user_value },
+  }
+}
+
 export async function judgeDeal(d: RawDeal): Promise<CuratorJudgement> {
+  if (!process.env.ANTHROPIC_API_KEY) return ruleJudge(d)
   const userMessage = `Score this scraped deal against the rubric:\n\n${summarizeForCurator(d)}\n\nReturn JSON only.`
 
   let raw: string
   try {
     raw = await callClaude([{ role: 'user', content: userMessage }])
   } catch (e: any) {
-    return {
-      score: 0,
-      publish: false,
-      reasoning: `Curator API error: ${e.message}`,
-      scores: { discount_reality: 0, product_quality: 0, price_competitiveness: 0, urgency_legitimacy: 0, user_value: 0 },
-    }
+    const fb = ruleJudge(d)
+    return { ...fb, reasoning: `${fb.reasoning} (Claude unavailable: ${String(e?.message || e).slice(0, 120)})` }
   }
 
   const parsed = extractJson(raw)
-  if (!parsed) {
-    return {
-      score: 0,
-      publish: false,
-      reasoning: 'Curator returned invalid JSON',
-      scores: { discount_reality: 0, product_quality: 0, price_competitiveness: 0, urgency_legitimacy: 0, user_value: 0 },
-    }
-  }
+  if (!parsed) return ruleJudge(d)
 
   const score = Number(parsed.score) || 0
   return {

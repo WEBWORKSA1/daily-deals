@@ -7,6 +7,7 @@
 //  3. Snapshot current prices into deal_price_history
 //  4. Trigger AI Scout to ingest from RSS feeds
 //  5. Process pending deal alert matches
+//  6. Refresh + re-warm the live deal feed and video hub caches
 
 import type { Config } from '@netlify/functions'
 
@@ -47,6 +48,7 @@ export default async (req: Request) => {
     run('snapshot-prices',  '/api/admin/snapshot-prices'),
     run('scout-run',        '/api/scout/run'),
     run('process-alerts',   '/api/admin/process-alerts'),
+    run('refresh-live',     '/api/refresh'),
   ])
 
   console.log('Hourly cron complete', {

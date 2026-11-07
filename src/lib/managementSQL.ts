@@ -374,4 +374,33 @@ export const MIGRATIONS: Array<{ id: string, name: string, sql: string }> = [
       GRANT USAGE ON SEQUENCE public.scraped_deals_raw_id_seq TO authenticated, anon;
     `,
   },
+  {
+    id: '012_leads_and_engagement',
+    name: 'Leads inbox (contact, concierge, advertise, contests, careers, pledges) — insert-only for anon',
+    sql: `
+      CREATE TABLE IF NOT EXISTS public.leads (
+        id BIGSERIAL PRIMARY KEY,
+        form_type VARCHAR(40) NOT NULL,
+        name VARCHAR(200),
+        email VARCHAR(320),
+        phone VARCHAR(60),
+        country VARCHAR(8),
+        subject VARCHAR(300),
+        payload JSONB,
+        source_path VARCHAR(300),
+        referrer VARCHAR(500),
+        ip_hash VARCHAR(64),
+        user_agent VARCHAR(400),
+        delivered BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_leads_type_created ON public.leads(form_type, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_leads_email ON public.leads(email);
+      REVOKE ALL ON public.leads FROM anon, authenticated;
+      GRANT INSERT ON public.leads TO anon, authenticated;
+      GRANT USAGE ON SEQUENCE public.leads_id_seq TO anon, authenticated;
+      ALTER TABLE public.deals ADD COLUMN IF NOT EXISTS source_name VARCHAR(80);
+      ALTER TABLE public.deals ADD COLUMN IF NOT EXISTS source_url TEXT;
+    `,
+  },
 ]

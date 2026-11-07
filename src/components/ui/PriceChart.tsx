@@ -32,15 +32,15 @@ export default function PriceChart({ dealId }: { dealId: number }) {
 
   if (loading) {
     return (
-      <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6 animate-pulse h-64" />
+      <div className="bg-brand-dark-3 border border-rule rounded-xl p-6 animate-pulse h-64" />
     )
   }
 
   // No data yet — show stub
   if (!history || history.length < 2) {
     return (
-      <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6 text-center">
-        <h3 className="text-white font-bold mb-2">📈 Price History</h3>
+      <div className="bg-brand-dark-3 border border-rule rounded-xl p-6 text-center">
+        <h3 className="text-ink font-bold mb-2">Price History</h3>
         <p className="text-brand-gray text-xs">
           Tracking starts when this deal updates. Check back soon for full price history.
         </p>
@@ -73,20 +73,20 @@ export default function PriceChart({ dealId }: { dealId: number }) {
     highest_ever: '#E8222A',
   }
   const trendLabels: Record<string, string> = {
-    lowest_ever: '🎯 Lowest ever',
-    falling: '📉 Falling',
-    stable: '➡️ Stable',
-    rising: '📈 Rising',
-    highest_ever: '🚨 Highest ever',
+    lowest_ever: 'Lowest ever',
+    falling: 'Falling',
+    stable: 'Stable',
+    rising: 'Rising',
+    highest_ever: 'Highest ever',
   }
   const trendKey = stats?.price_trend || 'stable'
   const trendColor = trendColors[trendKey]
   const trendLabel = trendLabels[trendKey]
 
   return (
-    <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6">
+    <div className="bg-brand-dark-3 border border-rule rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-bold">📈 Price History</h3>
+        <h3 className="text-ink font-bold">Price History</h3>
         <span className="text-xs font-bold px-2 py-1 rounded-md"
               style={{ background: trendColor + '22', color: trendColor }}>
           {trendLabel}
@@ -118,7 +118,7 @@ export default function PriceChart({ dealId }: { dealId: number }) {
         </div>
         <div>
           <div className="text-brand-gray text-[10px] uppercase tracking-wider">30-day avg</div>
-          <div className="text-white font-bold text-sm">
+          <div className="text-ink font-bold text-sm">
             ${Number(stats?.avg_price_30d || prices.reduce((a,b)=>a+b,0)/prices.length).toFixed(2)}
           </div>
         </div>

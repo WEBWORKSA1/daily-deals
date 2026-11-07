@@ -48,17 +48,17 @@ export default function CouponFeedback({ dealId, couponCode }: {
   const rate = stats?.coupon_success_rate || 0
 
   return (
-    <div className="bg-brand-dark-3 border border-white/5 rounded-xl p-6">
-      <h3 className="text-white font-bold mb-3">🎟️ Coupon Code</h3>
+    <div className="bg-brand-dark-3 border border-rule rounded-xl p-6">
+      <h3 className="text-ink font-bold mb-3">Coupon Code</h3>
 
       <div className="bg-brand-gold/10 border-2 border-dashed border-brand-gold/40 rounded-lg
                       px-4 py-3 mb-4 text-center">
-        <div className="font-mono text-brand-gold text-2xl font-black tracking-wider">
+        <div className="font-mono text-brand-gold text-2xl font-medium tracking-wider">
           {couponCode}
         </div>
         <button
           onClick={() => navigator.clipboard.writeText(couponCode)}
-          className="text-xs text-brand-gray hover:text-white mt-1">
+          className="text-xs text-brand-gray hover:text-accent mt-1">
           Tap to copy
         </button>
       </div>
@@ -72,7 +72,7 @@ export default function CouponFeedback({ dealId, couponCode }: {
               rate >= 70 ? 'text-brand-green' : rate >= 40 ? 'text-brand-gold' : 'text-brand-red'
             }`}>{rate}%</span>
           </div>
-          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-2 bg-paper-2 rounded-full overflow-hidden">
             <div className="h-full transition-all duration-500"
               style={{
                 width: `${rate}%`,

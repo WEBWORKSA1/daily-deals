@@ -67,6 +67,11 @@ export interface Deal {
   is_verified?: boolean
   view_count?: number
   save_count?: number
+  // Live-layer fields (deals pulled from public feeds at request time; not stored in the DB)
+  source_name?: string
+  source_url?: string
+  out_url?: string
+  is_live?: boolean
 }
 
 export interface Location {
