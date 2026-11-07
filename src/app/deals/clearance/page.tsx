@@ -1,46 +1,27 @@
 import { Metadata } from 'next'
-import { supabase } from '@/lib/db'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import DealSection from '@/components/ui/DealSection'
+import DealListing from '@/components/ui/DealListing'
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Clearance Deals | Daily.Deals' }
+export const revalidate = 600
 
-export default async function ClearancePage() {
-  const { data: deals } = await supabase
-    .from('deals').select('*, retailers(name, slug, brand_color, affiliate_net)')
-    .eq('is_active', true).eq('deal_type', 'clearance')
-    .order('discount_percent', { ascending: false }).limit(60)
+export const metadata: Metadata = {
+  title: 'Daily Clearance Deals',
+  description: 'Closeouts, open-box, refurbished and final-call inventory — the deepest discounts, usually while stock lasts.',
+  alternates: { canonical: '/deals/clearance' },
+}
 
-  const dealList = (deals || []).map((d: any) => ({
-    ...d, retailer_name: d.retailers?.name, retailer_slug: d.retailers?.slug, retailer_brand_color: d.retailers?.brand_color,
-  }))
-
+export default function Page() {
   return (
-    <>
-      <Header />
-      <main>
-        <div className="bg-brand-dark-2 border-b border-brand-blue/20">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <span className="text-brand-blue text-xs font-bold uppercase tracking-widest">Clearance</span>
-            <h1 className="font-heading text-5xl font-900 text-white uppercase mt-1">Clearance Deals</h1>
-            <p className="text-brand-gray text-sm mt-2">{dealList.length} clearance deals — massive discounts</p>
-          </div>
-        </div>
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {dealList.length > 0 ? (
-            <DealSection title="Clearance Deals" deals={dealList} />
-          ) : (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4 opacity-30">🏷️</div>
-              <h2 className="font-heading text-2xl text-white uppercase mb-2">No Clearance Deals Right Now</h2>
-              <p className="text-brand-gray">Check back soon — we update deals every 24 hours.</p>
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </>
+    <DealListing
+      eyebrow="DAILY CLEARANCE · LAST CALL"
+      title="Daily Clearance Deals"
+      dek="Closeouts, open-box, refurbished and final-call inventory — the deepest discounts, usually while stock lasts."
+      query={{ feed: 'clearance' }}
+      ranked={false}
+      guideSlugs={['open-box-refurbished-guide', 'best-time-to-buy-calendar']}
+      explainer={[
+        { h: 'How we rank', body: 'Clearance includes closeouts, open-box and refurbished stock, liquidation and final-sale items. Read condition notes and return terms carefully — they matter more here than anywhere else.' },
+        { h: 'Prices change fast', body: 'Retailers set prices and stock, and both can change at any time. Always confirm the final price, shipping and return terms at checkout before you buy.' },
+      ]}
+    />
   )
 }
