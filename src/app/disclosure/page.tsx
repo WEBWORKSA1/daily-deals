@@ -1,35 +1,25 @@
 import { Metadata } from 'next'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import { PageHero, Prose } from '@/components/ui/Editorial'
 
-export const metadata: Metadata = { title: 'Affiliate Disclosure | Daily.Deals' }
+export const metadata: Metadata = { title: 'Affiliate & Advertising Disclosure', description: 'How Daily.Deals earns money through affiliate links, advertising and sponsorships — and how we keep our recommendations independent.', alternates: { canonical: '/disclosure' } }
 
 export default function DisclosurePage() {
   return (
-    <>
-      <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <span className="text-brand-red text-xs font-bold uppercase tracking-widest">Legal</span>
-        <h1 className="font-heading text-5xl font-900 text-white uppercase mt-2 mb-2">Affiliate Disclosure</h1>
-        <p className="text-brand-gray text-sm mb-10">Last updated: May 2026</p>
-        <div className="space-y-6 text-brand-gray-2 leading-relaxed text-sm">
-          <div className="bg-brand-red/10 border border-brand-red/20 rounded-xl p-6">
-            <p className="text-white font-semibold">Daily.Deals participates in affiliate marketing programs. We may earn commissions when you click on deal links and make a purchase — at no additional cost to you.</p>
-          </div>
-          {[
-            ['Amazon Associates', 'Daily.Deals is a participant in the Amazon Services LLC Associates Program and Amazon.ca Associates Program, affiliate advertising programs designed to provide a means to earn fees by linking to Amazon.com and Amazon.ca.'],
-            ['Other Affiliate Programs', 'We also participate in affiliate programs with CJ Affiliate, ShareASale, Impact, and direct retailer programs. These programs pay us a small commission on qualifying purchases.'],
-            ['Editorial Independence', 'Our affiliate relationships do not influence which deals we feature. We feature deals based on their value to our users — discount percentage, retailer reputation, and deal quality.'],
-            ['FTC Compliance', 'In accordance with FTC guidelines, we disclose that many links on Daily.Deals are affiliate links. This disclosure applies site-wide to all deal links.'],
-          ].map(([title, text]) => (
-            <div key={title} className="bg-brand-dark-3 border border-white/10 rounded-xl p-6">
-              <h2 className="font-heading text-xl font-bold text-white uppercase mb-3">{title}</h2>
-              <p>{text}</p>
-            </div>
-          ))}
-        </div>
-      </main>
-      <Footer />
-    </>
+    <main>
+      <PageHero eyebrow="DISCLOSURE" title="How Daily.Deals makes money" dek="We want you to know exactly how we are paid, so you can judge our recommendations with full information." />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+        <Prose sections={[
+          { h: 'Affiliate links', body: [
+            'Daily.Deals is reader-supported. Many links to retailers are affiliate links: if you click one and make a purchase, the retailer may pay us a commission. The price you pay is the same.',
+            'Daily.Deals is a participant in the Amazon Services LLC Associates Program and the Amazon.ca Associates Program, affiliate advertising programs designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com and Amazon.ca. As an Amazon Associate we earn from qualifying purchases.',
+            'We also work with affiliate networks such as Skimlinks, which may convert ordinary retailer links into affiliate links automatically.',
+          ]},
+          { h: 'Advertising', body: ['We show ads served by Google AdSense and may run sponsored placements sold directly to brands. Ads are labelled “Advertisement” and sponsored deals are labelled “Sponsored”.'] },
+          { h: 'Editorial independence', body: ['Commissions and advertising never change a deal’s score or rank. We feature deals because they are good deals, and we will not feature a sponsored offer we would not recommend on its own merits.'] },
+          { h: 'Deal sources', body: ['Some deals are first spotted by other publications or communities. When that happens we credit and link to the source. Retailer names and logos are trademarks of their owners and are used for identification only.'] },
+          { h: 'Reader contributions', body: ['Readers may choose to support Daily.Deals directly. Contributions are voluntary and do not affect coverage, deal scores or giveaway odds.'] },
+        ]} />
+      </div>
+    </main>
   )
 }

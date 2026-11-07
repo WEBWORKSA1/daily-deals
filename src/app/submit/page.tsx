@@ -1,104 +1,46 @@
-'use client'
-import { useState } from 'react'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import { Metadata } from 'next'
+import SmartForm from '@/components/forms/SmartForm'
+import { PageHero } from '@/components/ui/Editorial'
 
-export default function SubmitDealPage() {
-  const [status, setStatus] = useState<'idle'|'sending'|'done'>('idle')
-  const [form, setForm] = useState({ title: '', url: '', store: '', original_price: '', deal_price: '', coupon_code: '', category: '', country: 'US', notes: '' })
+export const metadata: Metadata = {
+  title: 'Submit a Deal — Share a Great Find',
+  description: 'Found a great deal? Share it with the Daily.Deals community. Every submission is reviewed, and top contributors are featured as Deal Hunter of the Month.',
+  alternates: { canonical: '/submit' },
+}
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>) {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setStatus('sending')
-    await new Promise(r => setTimeout(r, 1000))
-    setStatus('done')
-  }
-
+export default function SubmitPage() {
   return (
-    <>
-      <Header />
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <span className="text-brand-red text-xs font-bold uppercase tracking-widest">Community</span>
-        <h1 className="font-heading text-5xl font-900 text-white uppercase mt-2 mb-2">Submit a Deal</h1>
-        <p className="text-brand-gray text-sm mb-10">Found a great deal? Share it with the Daily.Deals community. Our team reviews all submissions within 24 hours.</p>
-
-        {status === 'done' ? (
-          <div className="bg-brand-green/10 border border-brand-green/30 rounded-2xl p-8 text-center">
-            <div className="text-4xl mb-3">🎉</div>
-            <h2 className="font-heading text-2xl text-white uppercase mb-2">Deal Submitted!</h2>
-            <p className="text-brand-gray text-sm">Our team will review it within 24 hours. Thank you for contributing.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Deal Title *</label>
-              <input name="title" value={form.title} onChange={handleChange} required placeholder="e.g. Apple AirPods Pro 2nd Gen" className="input-dark" />
-            </div>
-            <div>
-              <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Deal URL *</label>
-              <input name="url" type="url" value={form.url} onChange={handleChange} required placeholder="https://..." className="input-dark" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Store Name *</label>
-                <input name="store" value={form.store} onChange={handleChange} required placeholder="Amazon, Walmart..." className="input-dark" />
-              </div>
-              <div>
-                <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Country *</label>
-                <select name="country" value={form.country} onChange={handleChange} className="input-dark">
-                  <option value="US">🇺🇸 United States</option>
-                  <option value="CA">🇨🇦 Canada</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Original Price</label>
-                <input name="original_price" value={form.original_price} onChange={handleChange} placeholder="$99.99" className="input-dark" />
-              </div>
-              <div>
-                <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Deal Price *</label>
-                <input name="deal_price" value={form.deal_price} onChange={handleChange} required placeholder="$49.99" className="input-dark" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Coupon Code</label>
-                <input name="coupon_code" value={form.coupon_code} onChange={handleChange} placeholder="SAVE20" className="input-dark" />
-              </div>
-              <div>
-                <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Category</label>
-                <select name="category" value={form.category} onChange={handleChange} className="input-dark">
-                  <option value="">Select category</option>
-                  <option>Electronics</option>
-                  <option>Fashion</option>
-                  <option>Home & Kitchen</option>
-                  <option>Beauty</option>
-                  <option>Sports</option>
-                  <option>Gaming</option>
-                  <option>Tools</option>
-                  <option>Grocery</option>
-                  <option>Automotive</option>
-                  <option>Other</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="text-brand-gray-2 text-xs font-bold uppercase tracking-wider block mb-2">Additional Notes</label>
-              <textarea name="notes" value={form.notes} onChange={handleChange} rows={3} placeholder="Any extra details about this deal..." className="input-dark resize-none" />
-            </div>
-            <button type="submit" disabled={status === 'sending'} className="btn-primary w-full justify-center py-4">
-              {status === 'sending' ? 'Submitting...' : 'Submit Deal →'}
-            </button>
-            <p className="text-brand-gray text-xs text-center">All submissions are reviewed by our team before publishing.</p>
-          </form>
-        )}
-      </main>
-      <Footer />
-    </>
+    <main>
+      <PageHero eyebrow="COMMUNITY" title="Submit a deal" dek="Spotted a genuine bargain? Share it. Our editors review every submission, and the most helpful contributor each month is featured as Deal Hunter of the Month." />
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid lg:grid-cols-[1.3fr_1fr] gap-12">
+        <section className="border border-ink p-6 sm:p-8 bg-white">
+          <SmartForm formType="submit-deal" submitLabel="Submit deal for review →" successTitle="Thanks — your deal is in the review queue." successBody="If it passes our checks, it will appear on the site. We’ll email you if it’s featured."
+            fields={[
+              { name: 'url', label: 'Deal link', type: 'url', required: true, placeholder: 'https://retailer.com/product…' },
+              { name: 'title', label: 'Product and offer', required: true, placeholder: 'e.g. Ninja 6-qt air fryer — $69 (was $129)' },
+              { name: 'price', label: 'Deal price', type: 'number', required: true, half: true },
+              { name: 'original_price', label: 'Regular price', type: 'number', half: true },
+              { name: 'retailer', label: 'Store', required: true, half: true },
+              { name: 'country', label: 'Country', type: 'select', options: [['US', 'United States'], ['CA', 'Canada'], ['BOTH', 'Both']], half: true, defaultValue: 'US' },
+              { name: 'coupon', label: 'Coupon code (if any)', half: true },
+              { name: 'expires', label: 'Ends (if known)', half: true, placeholder: 'e.g. Sunday night' },
+              { name: 'notes', label: 'Why it’s a good deal', type: 'textarea', rows: 3, placeholder: 'Lowest price you’ve seen, stacking tips, size availability…' },
+              { name: 'name', label: 'Your name or handle', half: true },
+              { name: 'email', label: 'Your email', type: 'email', required: true, half: true, help: 'Used only to contact you about this submission.' },
+              { name: 'no_affiliate', label: 'This link is not my own referral or affiliate link, and I am not paid by the seller.', type: 'checkbox', required: true },
+            ]} />
+        </section>
+        <aside className="space-y-5 text-sm text-ink-2">
+          <div className="section-eyebrow">WHAT MAKES A GREAT SUBMISSION</div>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>A real price drop on a specific product — ideally its lowest price in months.</li>
+            <li>A link to the retailer’s product page, not a search result.</li>
+            <li>From a store with clear shipping and return policies.</li>
+            <li>No referral or affiliate links, and nothing you are paid to promote.</li>
+          </ul>
+          <p>Retailers and brands who want to feature an offer should use our <a href="/advertise" className="underline text-ink">advertising page</a>.</p>
+        </aside>
+      </div>
+    </main>
   )
 }
