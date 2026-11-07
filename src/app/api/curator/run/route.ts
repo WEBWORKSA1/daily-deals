@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
         const expires = raw.expires_at
           ? new Date(raw.expires_at)
-          : new Date(Date.now() + 24 * 3600 * 1000) // Default: 24h from now
+          : new Date(Date.now() + 72 * 3600 * 1000) // Default: 72h from now (prevents same-day drain)
 
         const { data: dealRow, error: insErr } = await supabase
           .from('deals')
