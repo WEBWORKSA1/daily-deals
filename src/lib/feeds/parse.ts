@@ -119,6 +119,11 @@ export const RETAILERS: Array<{ slug: string; name: string; re: RegExp; country:
   { slug: 'sportchek', name: 'Sport Chek', re: /sport ?chek/i, country: 'CA', search: q => `https://www.sportchek.ca/search.html?q=${encodeURIComponent(q)}` },
   { slug: 'shoppers', name: 'Shoppers Drug Mart', re: /shoppers drug mart/i, country: 'CA', search: q => `https://shop.shoppersdrugmart.ca/search?text=${encodeURIComponent(q)}` },
   { slug: 'apple', name: 'Apple', re: /apple store|apple\.com/i, country: 'BOTH', search: q => `https://www.apple.com/us/search/${encodeURIComponent(q)}` },
+  { slug: 'steam', name: 'Steam', re: /\[steam\]|\(steam\)|store\.steampowered|\bon steam\b|\bsteam (?:store|key|sale)\b/i, country: 'BOTH', search: q => `https://store.steampowered.com/search/?term=${encodeURIComponent(q)}` },
+  { slug: 'gog', name: 'GOG', re: /\[gog\]|\bgog\.com\b|\bon gog\b/i, country: 'BOTH', search: q => `https://www.gog.com/en/games?query=${encodeURIComponent(q)}` },
+  { slug: 'epic-games', name: 'Epic Games Store', re: /epic games(?: store)?|\[egs\]/i, country: 'BOTH', search: q => `https://store.epicgames.com/en-US/browse?q=${encodeURIComponent(q)}` },
+  { slug: 'playstation-store', name: 'PlayStation Store', re: /playstation store|\[psn\]/i, country: 'BOTH', search: q => `https://store.playstation.com/en-us/search/${encodeURIComponent(q)}` },
+  { slug: 'nintendo-eshop', name: 'Nintendo eShop', re: /\beshop\b/i, country: 'BOTH', search: q => `https://www.nintendo.com/us/search/#q=${encodeURIComponent(q)}` },
 ]
 
 /** Texts are checked in priority order (feed's retailer field, then headline, then body). */

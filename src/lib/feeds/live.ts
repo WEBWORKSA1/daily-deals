@@ -89,13 +89,18 @@ function normalizeRss(src: Source, xml: string): Deal[] {
     const expires = dnExpires && !isNaN(Date.parse(dnExpires)) ? new Date(dnExpires).toISOString() : null
     const text = `${it.title} ${it.description}`
     const stated = it.title.match(/(?<!up to )\b(\d{1,2})%\s*off\b/i)
-    const discount = original ? Math.round(((original - price) / original) * 100) : stated ? parseInt(stated[1], 10) : null
+    const statedPct = stated ? parseInt(stated[1], 10) : null
+    const computed = original ? Math.round(((original - price) / original) * 100) : null
+    // When the headline's own "NN% off" disagrees with the inferred regular price, trust the headline.
+    const conflict = computed !== null && statedPct !== null && Math.abs(computed - statedPct) > 10
+    const discount = conflict ? statedPct : computed ?? statedPct
+    const regular = conflict ? null : original
     const id = -(hash32(src.id + it.link) % 2_000_000_000) - 1
     out.push({
       id,
       title: it.title.replace(/\s+/g, ' ').slice(0, 180),
       description: it.description ? it.description.slice(0, 280) : null,
-      original_price: original,
+      original_price: regular,
       deal_price: price,
       discount_percent: discount && discount > 0 && discount < 96 ? discount : null,
       retailer_id: 0,
@@ -203,7 +208,7 @@ async function collect(): Promise<{ deals: Deal[]; sources: Array<{ id: string; 
   }
 }
 
-export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v5'], { revalidate: 1800, tags: ['live-deals'] })
+export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v6'], { revalidate: 1800, tags: ['live-deals'] })
 
 export async function getLiveDeals(): Promise<Deal[]> {
   try { return (await getLiveFeed()).deals } catch { return [] }
