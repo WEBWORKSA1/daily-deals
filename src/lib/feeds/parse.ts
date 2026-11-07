@@ -121,9 +121,14 @@ export const RETAILERS: Array<{ slug: string; name: string; re: RegExp; country:
   { slug: 'apple', name: 'Apple', re: /apple store|apple\.com/i, country: 'BOTH', search: q => `https://www.apple.com/us/search/${encodeURIComponent(q)}` },
 ]
 
+/** Texts are checked in priority order (feed's retailer field, then headline, then body). */
 export function findRetailer(...texts: Array<string | null | undefined>) {
-  const t = texts.filter(Boolean).join(' ')
-  return RETAILERS.find(r => r.re.test(t)) || null
+  for (const t of texts) {
+    if (!t) continue
+    const hit = RETAILERS.find(r => r.re.test(t))
+    if (hit) return hit
+  }
+  return null
 }
 
 /** Same as findRetailer, but swaps to the Canadian storefront when the source is Canadian. */
