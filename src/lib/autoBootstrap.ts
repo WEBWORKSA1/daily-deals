@@ -3,7 +3,7 @@
 //
 // SELF-HEALING BEHAVIORS:
 //   1. Auto-clear bad seed deals (one-time, on first cold start after this commit)
-//   2. Auto-fire scrape+curate pipeline if deals table is empty AND ANTHROPIC_API_KEY is set
+//   2. Auto-fire scrape+curate pipeline when fewer than 5 deals are active (works without an AI key)
 //   3. Periodic hotness score recompute (every 15 min)
 
 import { supabase } from './db'
@@ -277,7 +277,8 @@ async function clearBadSeeds(): Promise<void> {
 
 async function maybeFirePipeline(): Promise<void> {
   try {
-    if (!process.env.ANTHROPIC_API_KEY) return
+    // Curator falls back to rule-based scoring when no ANTHROPIC_API_KEY is set,
+    // so the pipeline can always run.
 
     const { count: activeDeals } = await supabase
       .from('deals')
