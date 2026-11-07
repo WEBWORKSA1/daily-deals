@@ -59,9 +59,20 @@ export function monetize(target: string, country: 'US' | 'CA' | 'BOTH'): string 
 }
 
 // ── normalization ─────────────────────────────────────────────────────────
+/** Multi-product roundup posts ("Early Black Friday Apple deals: MacBook, AirPods and more")
+ *  have no single price, so they're kept out of the deal grid. */
+export function isRoundup(title: string): boolean {
+  const t = title.replace(/\s+/g, ' ')
+  if (/\b(?:and|&|\+)\s*more\b|\bround-?up\b|\bdeals? of the (?:day|week)\b/i.test(t)) return true
+  if (/^(?:today'?s|this week'?s|weekend|early|the best|best|top|\d+\s+best)\b[^:]*\bdeals\b/i.test(t)) return true
+  if (/\b(?:black friday|cyber monday|prime day|boxing day|labou?r day|memorial day)\b[^:$]*\b(?:deals|sale)\s*(?::|—|–|-|$)/i.test(t) && !/\$\s?\d/.test(t.split(/[:—–]/)[0])) return true
+  return false
+}
+
 function normalizeRss(src: Source, xml: string): Deal[] {
   const out: Deal[] = []
   for (const it of parseFeed(xml).slice(0, 40)) {
+    if (isRoundup(it.title)) continue
     const dnPrice = tag(it.raw, 'dealnews:price')
     const dnRetailer = tag(it.raw, 'dealnews:retailer')
     const dnExpires = tag(it.raw, 'dealnews:expires')
@@ -191,7 +202,7 @@ async function collect(): Promise<{ deals: Deal[]; sources: Array<{ id: string; 
   }
 }
 
-export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v3'], { revalidate: 1800, tags: ['live-deals'] })
+export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v4'], { revalidate: 1800, tags: ['live-deals'] })
 
 export async function getLiveDeals(): Promise<Deal[]> {
   try { return (await getLiveFeed()).deals } catch { return [] }
