@@ -61,15 +61,15 @@ export default function Comments({ dealId }: { dealId: number }) {
   }
 
   return (
-    <section className="bg-brand-dark-3 border border-white/5 rounded-xl p-6">
+    <section className="bg-brand-dark-3 border border-rule rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-bold flex items-center gap-2">
-          💬 Discussion
+        <h3 className="text-ink font-bold flex items-center gap-2">
+          Discussion
           <span className="text-brand-gray text-xs font-normal">({comments.length})</span>
         </h3>
         <button onClick={() => setShowFlagModal(dealId)}
           className="text-brand-gray text-xs hover:text-brand-red">
-          🚩 Report deal
+          Report deal
         </button>
       </div>
 
@@ -78,7 +78,7 @@ export default function Comments({ dealId }: { dealId: number }) {
         <div className="mb-6">
           <textarea value={body} onChange={e => setBody(e.target.value)}
             placeholder="Share your thoughts on this deal..."
-            className="input-dark w-full p-3 min-h-[80px] resize-y" maxLength={2000} />
+            className="input-paper w-full p-3 min-h-[80px] resize-y" maxLength={2000} />
           <div className="flex items-center justify-between mt-2">
             <span className="text-brand-gray text-xs">{body.length}/2000</span>
             <button onClick={postComment} disabled={posting || !body.trim()}
@@ -89,7 +89,7 @@ export default function Comments({ dealId }: { dealId: number }) {
           {error && <p className="text-brand-red text-xs mt-1">{error}</p>}
         </div>
       ) : (
-        <div className="bg-white/5 border border-white/5 rounded-lg p-3 text-center mb-6">
+        <div className="bg-paper-2 border border-rule rounded-lg p-3 text-center mb-6">
           <a href="/signin" className="text-brand-red text-sm hover:underline">Sign in</a>
           <span className="text-brand-gray text-sm"> to join the conversation</span>
         </div>
@@ -105,13 +105,13 @@ export default function Comments({ dealId }: { dealId: number }) {
       ) : (
         <div className="space-y-3">
           {comments.map(c => (
-            <div key={c.id} className="border-b border-white/5 pb-3 last:border-0">
+            <div key={c.id} className="border-b border-rule pb-3 last:border-0">
               <div className="flex items-center gap-2 text-xs text-brand-gray mb-1">
-                <span className="text-white font-bold">
+                <span className="text-ink font-bold">
                   {c.users?.username || c.users?.display_name || 'Anonymous'}
                 </span>
                 {c.users && c.users.karma_score > 0 && (
-                  <span className="text-brand-gold">✨{c.users.karma_score}</span>
+                  <span className="text-brand-gold">{c.users.karma_score}</span>
                 )}
                 <span>·</span>
                 <span>{new Date(c.created_at).toLocaleDateString()}</span>
@@ -124,11 +124,11 @@ export default function Comments({ dealId }: { dealId: number }) {
 
       {/* FLAG MODAL */}
       {showFlagModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+        <div className="fixed inset-0 bg-ink/40 z-50 flex items-center justify-center p-4"
              onClick={() => setShowFlagModal(null)}>
-          <div className="bg-brand-dark-3 border border-white/10 rounded-2xl p-6 w-full max-w-sm"
+          <div className="bg-brand-dark-3 border border-rule rounded-2xl p-6 w-full max-w-sm"
                onClick={e => e.stopPropagation()}>
-            <h3 className="text-white font-bold mb-3">Report this deal</h3>
+            <h3 className="text-ink font-bold mb-3">Report this deal</h3>
             <p className="text-brand-gray text-xs mb-4">Why are you reporting?</p>
             <div className="space-y-2">
               {[
@@ -139,14 +139,14 @@ export default function Comments({ dealId }: { dealId: number }) {
                 { v: 'other', l: 'Other' },
               ].map(r => (
                 <button key={r.v} onClick={() => flagDeal(r.v)}
-                  className="w-full text-left text-sm bg-white/5 hover:bg-white/10 text-white
+                  className="w-full text-left text-sm bg-paper-2 hover:bg-white/10 text-ink
                              px-3 py-2 rounded-md transition-colors">
                   {r.l}
                 </button>
               ))}
             </div>
             <button onClick={() => setShowFlagModal(null)}
-              className="w-full text-brand-gray text-xs mt-3 hover:text-white">
+              className="w-full text-brand-gray text-xs mt-3 hover:text-accent">
               Cancel
             </button>
           </div>
