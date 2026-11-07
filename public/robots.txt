@@ -2,10 +2,16 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
+Disallow: /go
 Disallow: /signin
 Disallow: /account
 
-# Block any noisy bots that don't bring traffic
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
 User-agent: AhrefsBot
 Crawl-delay: 30
 User-agent: SemrushBot
