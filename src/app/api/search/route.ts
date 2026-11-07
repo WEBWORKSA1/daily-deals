@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { getLiveDeals } from '@/lib/feeds/live'
+import { categoryNames } from '@/lib/data'
 import { supabase } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -63,10 +65,10 @@ export async function GET(request: Request) {
   query = query.limit(limit)
 
   const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) console.warn('[search] db error', error.message)
 
   // Filter retailer by slug match in JS (Supabase joined filter is complex)
-  let results = data || []
+  let results: any[] = data || []
   if (retailer) {
     results = results.filter((d: any) => d.retailers?.slug === retailer)
   }
@@ -79,6 +81,23 @@ export async function GET(request: Request) {
     retailer_brand_color: d.retailers?.brand_color,
     affiliate_net: d.retailers?.affiliate_net,
   }))
+
+  // Top up from the live deal layer so search always returns fresh results.
+  if (mapped.length < limit) {
+    const live = await getLiveDeals()
+    const words = q.toLowerCase().split(/\s+/).filter(Boolean)
+    const catNames = category ? categoryNames(category) : []
+    const extra = live.filter(d =>
+      (!words.length || words.every(w => `${d.title} ${d.retailer_name} ${d.category}`.toLowerCase().includes(w))) &&
+      (!catNames.length || catNames.includes(d.category)) &&
+      (!country || d.country === country || d.country === 'BOTH') &&
+      (d.discount_percent || 0) >= minDiscount && d.deal_price <= maxPrice &&
+      (!retailer || (d.retailer_slug || '').startsWith(retailer.replace(/-(us|ca)$/, '')))
+    )
+    if (sort === 'price_asc') extra.sort((a, b) => a.deal_price - b.deal_price)
+    else if (sort === 'discount') extra.sort((a, b) => (b.discount_percent || 0) - (a.discount_percent || 0))
+    mapped.push(...extra.slice(0, limit - mapped.length) as any[])
+  }
 
   return NextResponse.json({
     query: q,
