@@ -1,78 +1,70 @@
 import Link from 'next/link'
+import { FOOTER_COLUMNS, SITE_NAME, OWNER_NAME, INQUIRY_URL } from '@/lib/site'
+import FooterSubscribe from './FooterSubscribe'
+import { CookieSettingsLink } from './ConsentBanner'
 
 export default function Footer() {
   const year = new Date().getFullYear()
   return (
     <>
-      {/* NEWSLETTER BLOCK — high contrast editorial close */}
       <section className="bg-ink text-white">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-center">
-          <div className="text-[11px] tracking-[0.25em] text-ink-muted mb-3">THE DAILY DEAL · DELIVERED</div>
-          <h2 className="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-white mb-3">
-            Daily Deals. In your inbox.
-          </h2>
-          <p className="text-sm text-ink-faint max-w-md mx-auto mb-6">
-            One email each morning. The day’s best deals, hand-picked. Free.
-          </p>
-          <form className="flex justify-center gap-2 max-w-md mx-auto">
-            <input type="email" placeholder="you@email.com"
-              className="flex-1 bg-white/5 border border-white/15 text-white placeholder-white/40
-                         rounded px-4 py-3 text-sm focus:outline-none focus:border-white" />
-            <button type="submit" className="bg-accent hover:bg-accent-dark text-white font-medium px-5 py-3 rounded text-sm">
-              Subscribe
-            </button>
-          </form>
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14 grid lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <div className="text-[11px] tracking-[0.25em] text-white/60 mb-3">THE DAILY EDITION · DELIVERED</div>
+            <h2 className="font-serif text-3xl sm:text-4xl font-medium tracking-tight text-white mb-3">Daily Deals. In your inbox.</h2>
+            <p className="text-sm text-white/70 max-w-md">One short email each morning with the top ten deals of the day, plus giveaway reminders. Free. Unsubscribe in one click.</p>
+          </div>
+          <FooterSubscribe />
         </div>
       </section>
 
       <footer className="bg-white border-t border-ink">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
             <div className="col-span-2 md:col-span-1">
-              <div className="wordmark text-xl text-ink mb-3">
-                Daily<span className="dot">.</span>Deals
-              </div>
+              <div className="wordmark text-xl text-ink mb-3">Daily<span className="dot">.</span>Deals</div>
               <p className="text-ink-2 text-sm leading-relaxed mb-4">
-                Hand-picked discounts from 1,000+ retailers across the US and Canada. Updated every 24 hours.
+                An automated, editor-designed deal desk for shoppers in the US and Canada. Fresh deals every day, ranked by real savings.
               </p>
-              <div className="flex gap-3 text-[11px] text-ink-muted tracking-wider">
-                <span>43,140 ZIPS COVERED</span>
+              <a href={INQUIRY_URL} target="_blank" rel="noopener" className="text-xs text-accent hover:underline">
+                Interested in this website or domain? Contact →
+              </a>
+            </div>
+            {FOOTER_COLUMNS.map(col => (
+              <div key={col.title}>
+                <div className="section-eyebrow mb-4">{col.title.toUpperCase()}</div>
+                <ul className="space-y-2.5">
+                  {col.links.map(([label, href]) => (
+                    <li key={href}><Link href={href} className="text-ink-2 hover:text-ink text-sm transition-colors">{label}</Link></li>
+                  ))}
+                </ul>
               </div>
-            </div>
-            <div>
-              <div className="section-eyebrow mb-4">DAILY DEALS</div>
-              <ul className="space-y-2.5">
-                {[["Daily Hot Deals",'/deals/hot'],['Daily Flash Deals','/deals/flash'],['Daily Clearance','/deals/clearance'],['Daily US Deals','/deals/us'],['Daily Canadian Deals','/deals/canada']].map(([label,href])=>(
-                  <li key={href}><Link href={href} className="text-ink-2 hover:text-ink text-sm transition-colors">{label}</Link></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="section-eyebrow mb-4">CATEGORIES</div>
-              <ul className="space-y-2.5">
-                {[['Electronics','/category/electronics'],['Fashion','/category/fashion'],['Home & Kitchen','/category/home-kitchen'],['Sports','/category/sports-outdoors'],['Gaming','/category/gaming'],['Beauty','/category/beauty']].map(([label,href])=>(
-                  <li key={href}><Link href={href as string} className="text-ink-2 hover:text-ink text-sm transition-colors">{label}</Link></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="section-eyebrow mb-4">COMPANY</div>
-              <ul className="space-y-2.5">
-                {[['About','/about'],['Contact','/contact'],['Submit a Deal','/submit'],['Privacy','/privacy'],['Terms','/terms'],['Affiliate Disclosure','/disclosure']].map(([label,href])=>(
-                  <li key={href}><Link href={href} className="text-ink-2 hover:text-ink text-sm transition-colors">{label}</Link></li>
-                ))}
-              </ul>
-            </div>
+            ))}
           </div>
         </div>
+
         <div className="border-t border-rule">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-ink-muted text-xs">© {year} Daily.Deals — All rights reserved.</p>
-            <p className="text-ink-muted text-xs text-center">
-              We may earn affiliate commissions when you click on deals.{' '}
-              <Link href="/disclosure" className="text-ink hover:underline">Disclosure</Link>
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-3">
+            <p className="text-ink-muted text-[11px] leading-relaxed">
+              <strong className="text-ink-2 font-medium">Trademark &amp; copyright notice.</strong>{' '}
+              {SITE_NAME}™ and the {SITE_NAME} wordmark are trademarks of {OWNER_NAME}. © {year} {OWNER_NAME}. All rights reserved.
+              Original text, design, scoring methodology, guides and compilation on this site are protected by copyright and may not be reproduced without permission.
+              All other product names, logos, brands and retailer names are the property of their respective owners and are used for identification only; their use does not imply endorsement.
+              Prices and availability are set by retailers and can change at any time — confirm the final price at checkout.{' '}
+              <Link href="/legal" className="text-ink underline">Full notice</Link>
             </p>
-            <p className="text-ink-muted text-[11px] tracking-widest">UPDATED DAILY</p>
+            <p className="text-ink-muted text-[11px] leading-relaxed">
+              <strong className="text-ink-2 font-medium">Affiliate disclosure.</strong> {SITE_NAME} is reader-supported. When you buy through links on our site we may earn a commission, at no extra cost to you.
+              As an Amazon Associate we earn from qualifying purchases. <Link href="/disclosure" className="text-ink underline">Learn more</Link>
+            </p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-ink-muted pt-1">
+              <span>© {year} {OWNER_NAME}</span>
+              <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+              <Link href="/terms" className="hover:text-ink">Terms</Link>
+              <Link href="/legal#dmca" className="hover:text-ink">DMCA</Link>
+              <CookieSettingsLink className="hover:text-ink" />
+              <span className="tracking-widest ml-auto">UPDATED CONTINUOUSLY</span>
+            </div>
           </div>
         </div>
       </footer>
