@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
 
     if (findErr) throw findErr
 
-    const ids = (expired || []).map((d: any) => d.id)
+    // Floor: never drain the curated catalogue below FLOOR active rows in one pass.
+    const FLOOR = 24
+    const { count: activeCount } = await supabase.from('deals').select('*', { count: 'exact', head: true }).eq('is_active', true)
+    const allowed = Math.max(0, (activeCount || 0) - FLOOR)
+    const ids = (expired || []).map((d: any) => d.id).sort((a: number, b: number) => a - b).slice(0, allowed)
     if (ids.length === 0) {
       return NextResponse.json({ ok: true, expired: 0 })
     }
