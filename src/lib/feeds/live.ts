@@ -208,7 +208,7 @@ async function collect(): Promise<{ deals: Deal[]; sources: Array<{ id: string; 
   }
 }
 
-export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v6'], { revalidate: 1800, tags: ['live-deals'] })
+export const getLiveFeed = unstable_cache(collect, ['live-deal-feed-v7'], { revalidate: 1800, tags: ['live-deals'] })
 
 export async function getLiveDeals(): Promise<Deal[]> {
   try { return (await getLiveFeed()).deals } catch { return [] }
