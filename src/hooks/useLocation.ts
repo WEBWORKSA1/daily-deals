@@ -35,8 +35,19 @@ async function lookupCode(code: string): Promise<UserLocation | null> {
 }
 
 async function detectByIP(): Promise<UserLocation | null> {
+  // 1) Netlify edge geo header via our own API (fast, no third party)
   try {
-    const res = await fetch('https://ipapi.co/json/')
+    const r = await fetch('/api/geo', { signal: AbortSignal.timeout(2500) })
+    if (r.ok) {
+      const g = await r.json()
+      if (g && ['US', 'CA'].includes(g.country) && g.city) {
+        return { city: g.city, stateProvince: g.region || '', stateCode: g.regionCode || '', postalCode: g.postal || '', country: g.country, isDetected: true, latitude: g.lat, longitude: g.lng }
+      }
+    }
+  } catch {}
+  // 2) Public IP geolocation fallback, time-boxed so the UI never hangs
+  try {
+    const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3500) })
     if (!res.ok) return null
     const data = await res.json()
     if (!['US', 'CA'].includes(data.country_code)) return null

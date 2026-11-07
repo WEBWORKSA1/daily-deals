@@ -20,7 +20,7 @@ export default function StoreGrid({ retailers }: { retailers: Retailer[] }) {
       {retailers.map(r => (
         <Link key={r.id} href={`/store/${r.slug}`}
           className="flex flex-col items-center justify-center gap-2.5 p-4
-                     bg-brand-dark-3 border border-white/10 rounded-xl
+                     bg-brand-dark-3 border border-rule rounded-xl
                      hover:border-brand-red/40 hover:bg-brand-dark-4
                      transition-all duration-150 group">
 
@@ -35,19 +35,19 @@ export default function StoreGrid({ retailers }: { retailers: Retailer[] }) {
                 className="w-8 h-8 object-contain filter brightness-0 invert"
               />
             ) : (
-              <span className="text-white text-lg font-black">
+              <span className="text-white text-lg font-medium">
                 {r.name.charAt(0)}
               </span>
             )}
           </div>
 
           <span className="text-xs font-medium text-brand-gray-2 text-center
-                           group-hover:text-white transition-colors line-clamp-1 w-full text-center">
+                           group-hover:text-accent transition-colors line-clamp-1 w-full text-center">
             {r.name}
           </span>
 
           <span className="text-xs">
-            {r.country === 'CA' ? '🇨🇦' : r.country === 'US' ? '🇺🇸' : '🌎'}
+            {r.country === 'CA' ? '' : r.country === 'US' ? '' : ''}
           </span>
         </Link>
       ))}
