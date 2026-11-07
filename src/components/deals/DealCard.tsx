@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Deal } from '@/types'
 import { formatPrice, getTimeRemaining } from '@/lib/utils'
@@ -14,6 +14,8 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
   const [timeLeft, setTimeLeft] = useState<string | null>(null)
   const [clicking, setClicking] = useState(false)
   const [imgFailed, setImgFailed] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+  useEffect(() => { const i = imgRef.current; if (i && i.complete && i.naturalWidth === 0) setImgFailed(true) }, [])
   const [userVote, setUserVote] = useState<number | null>(initialUserVote ?? null)
   const [upvotes, setUpvotes] = useState((deal as any).upvote_count || 0)
   const [downvotes, setDownvotes] = useState((deal as any).downvote_count || 0)
@@ -28,12 +30,18 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
     return () => clearInterval(id)
   }, [deal.expires_at])
 
+  function openLive() {
+    if (deal.out_url) window.open(deal.out_url, '_blank', 'noopener')
+  }
+
   function handleCardClick() {
+    if (deal.is_live) return openLive()
     router.push(`/deal/${deal.id}`)
   }
 
   async function handleGetDeal(e: React.MouseEvent) {
     e.stopPropagation()
+    if (deal.is_live) return openLive()
     if (clicking) return
     setClicking(true)
     let urlToOpen = deal.affiliate_url
@@ -108,7 +116,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
 
   return (
     <div className="deal-card group cursor-pointer relative" onClick={handleCardClick}>
-      <button onClick={handleSave}
+      {!deal.is_live && <button onClick={handleSave}
         className={`absolute top-2 right-2 z-20 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
           isSaved
             ? 'bg-ink text-white'
@@ -116,7 +124,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
         }`}
         title={isSaved ? 'Saved' : 'Save deal'}>
         {isSaved ? '★' : '☆'}
-      </button>
+      </button>}
 
       {/* IMAGE — high-contrast placeholder when missing/broken */}
       <div className="relative bg-paper-2 aspect-square overflow-hidden flex-shrink-0 border-b border-rule">
@@ -134,6 +142,8 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
           </div>
         ) : (
           <img
+            ref={imgRef}
+            loading="lazy"
             src={deal.image_url!}
             alt={deal.title}
             onError={() => setImgFailed(true)}
@@ -151,6 +161,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
       <div className="p-3.5 flex flex-col flex-1">
         <div className="badge-eyebrow mb-2 truncate">
           {deal.retailer_name || 'RETAILER'}
+          {deal.country === 'CA' ? ' · CA' : deal.country === 'US' ? ' · US' : ''}
         </div>
 
         <h3 className="text-ink text-sm font-medium leading-snug line-clamp-2 mb-3">
@@ -191,7 +202,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
           {(upvotes > 0 || downvotes > 0 || tier) && (
             <div className="flex items-center justify-between gap-2 text-[11px] pt-2 border-t border-rule">
               <div className="flex items-center gap-1.5">
-                <button onClick={e => handleVote(1, e)}
+                {!deal.is_live && <><button onClick={e => handleVote(1, e)}
                   className={`text-[11px] transition-colors ${userVote === 1 ? 'text-good font-medium' : 'text-ink-muted hover:text-ink'}`}
                   aria-label="Upvote">▲</button>
                 <span className={`font-mono tabular-nums ${
@@ -199,7 +210,7 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
                 }`}>{netVotes > 0 ? `+${netVotes}` : netVotes}</span>
                 <button onClick={e => handleVote(-1, e)}
                   className={`text-[11px] transition-colors ${userVote === -1 ? 'text-accent font-medium' : 'text-ink-muted hover:text-ink'}`}
-                  aria-label="Downvote">▼</button>
+                  aria-label="Downvote">▼</button></>}
               </div>
 
               {tier && (
@@ -221,8 +232,14 @@ export default function DealCard({ deal, initialUserVote, initialIsSaved }: {
             className="w-full bg-ink hover:bg-accent text-white
                        text-xs font-medium py-2.5 rounded
                        transition-colors duration-150">
-            {clicking ? 'Opening…' : 'Get this deal →'}
+            {clicking ? 'Opening…' : deal.is_live ? `Shop at ${deal.retailer_name || 'store'} →` : 'Get this deal →'}
           </button>
+          {deal.is_live && deal.source_url && (
+            <a href={deal.source_url} target="_blank" rel="noopener nofollow" onClick={e => e.stopPropagation()}
+              className="block text-center text-[10px] tracking-wider text-ink-muted hover:text-ink">
+              SPOTTED VIA {deal.source_name?.toUpperCase()} ↗
+            </a>
+          )}
         </div>
       </div>
     </div>
